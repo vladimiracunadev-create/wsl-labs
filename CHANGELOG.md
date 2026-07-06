@@ -7,6 +7,19 @@ el proyecto adopta [versionado semántico](https://semver.org/lang/es/).
 
 ---
 
+## [0.3.1] - 2026-07-06
+
+### Added
+
+- 📐 **Requisitos medidos** (reales) en la interfaz y la documentación: tamaño de
+  imagen (`wslc images`) y RAM en reposo (`wslc stats`) por caso, con mínimo y
+  recomendado por caso y del sistema. El panel muestra 💾 tamaño y 🧠 RAM en cada
+  tarjeta más una franja de requisitos del sistema; el catálogo
+  `containers.config.json` incorpora `requirements` por caso y un bloque `system`.
+  Detalle en [REQUIREMENTS.md](docs/REQUIREMENTS.md).
+
+---
+
 ## [0.3.0] - 2026-07-06
 
 **Giro completo: wsl-labs es ahora una plataforma de contenedores (WSL Container Center).**

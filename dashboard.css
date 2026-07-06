@@ -107,6 +107,34 @@ body {
   margin-top: 24px;
 }
 
+/* Franja de requisitos del sistema */
+.sysreq {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 18px;
+  margin-top: 18px;
+  padding: 12px 16px;
+  background: rgba(217, 106, 59, 0.08);
+  border: 1px solid rgba(217, 106, 59, 0.22);
+  border-radius: 14px;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.sysreq:empty {
+  display: none;
+}
+
+.sysreq-title {
+  font-weight: 700;
+  color: var(--accent-dark);
+}
+
+.sysreq-item b {
+  color: var(--text);
+}
+
 .metric,
 .panel,
 .logs,

@@ -88,6 +88,47 @@ El proyecto publica los casos en `localhost` de Windows. Deben estar **libres**:
 
 ---
 
+## 📐 Tamaños y RAM medidos (reales)
+
+> [!NOTE]
+> Datos **medidos** en esta plataforma: tamaño de imagen (`wslc images`) y memoria
+> en reposo (`wslc stats`). El mínimo/recomendado añade margen para carga.
+
+### Sistema (global)
+
+| Recurso | Mínimo | Recomendado | Cómodo |
+| --- | --- | --- | --- |
+| 💾 Disco (imágenes) | ~7 GB* | — | — |
+| 🧠 RAM | 4 GB | 8 GB | 16 GB |
+| 🔧 CPU | 2 cores | 4 cores | — |
+
+\* Suma de tamaños reportados (~7.4 GB); las **capas base compartidas** (varios casos
+usan `node:20-alpine`, etc.) reducen el disco real. Rara vez se corren los 12 a la vez.
+
+### Por caso
+
+| # | Caso | 💾 Imagen(es) | 🧠 RAM reposo | 🧠 RAM mín. | 🧠 RAM recom. |
+| --- | --- | ---: | ---: | ---: | ---: |
+| 01 | node-api | 136 MB | 9 MB | 128 MB | 256 MB |
+| 03 | python-api | 62 MB | 21 MB | 128 MB | 256 MB |
+| 10 | go-api | 15 MB | 2 MB | 64 MB | 128 MB |
+| 06 | nginx-web | 62 MB | 8 MB | 64 MB | 128 MB |
+| 04 | redis-cache | 175 MB | 13 MB | 256 MB | 512 MB |
+| 05 | postgres-api | 493 MB | 36 MB | 512 MB | 1 GB |
+| 02 | php-lamp | 808 MB | 76 MB | 512 MB | 1 GB |
+| 07 | rabbitmq | 252 MB | 148 MB | 512 MB | 1 GB |
+| 09 | multi-service | 1012 MB | 83 MB | 512 MB | 1 GB |
+| 08 | prometheus-grafana | 1406 MB | 177 MB | 768 MB | 1.5 GB |
+| 12 | jenkins | 490 MB | 702 MB | 1 GB | 2 GB |
+| 11 | elasticsearch | 1410 MB | 910 MB | 2 GB | 3 GB |
+
+> [!TIP]
+> Los `starter` (node/python/go/nginx) son ligerísimos (<25 MB de RAM en reposo).
+> Los pesados son **Elasticsearch** (JVM) y **Jenkins**. El panel muestra estos
+> mismos datos (💾 tamaño y 🧠 RAM) en cada tarjeta y en la franja de requisitos.
+
+---
+
 ## 📊 Requisitos por escenario
 
 | Escenario | RAM sugerida | Comentario |

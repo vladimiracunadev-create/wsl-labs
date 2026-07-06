@@ -16,6 +16,7 @@ const els = {
   generatedAt: document.getElementById('generated-at'),
   subtitle: document.getElementById('hero-subtitle'),
   grid: document.getElementById('wslc-grid'),
+  sysreq: document.getElementById('sysreq'),
   logsTitle: document.getElementById('logs-title'),
   logsOutput: document.getElementById('logs-output'),
   refresh: document.getElementById('refresh-all'),
@@ -37,6 +38,26 @@ function safeUrl(url) {
 
 function formatTimestamp(value) {
   return value ? new Date(value).toLocaleString('es-CL') : 'sin datos';
+}
+
+// MB -> "136 MB" o "1.4 GB"
+function fmtMB(mb) {
+  if (mb == null) return '—';
+  return mb >= 1024 ? `${(mb / 1024).toFixed(1)} GB` : `${mb} MB`;
+}
+
+// Franja de requisitos del sistema (arriba, bajo las métricas).
+function renderSystemReq(system) {
+  if (!els.sysreq) return;
+  if (!system) { els.sysreq.innerHTML = ''; return; }
+  const item = (label, value) => `<span class="sysreq-item"><b>${esc(value)}</b> ${esc(label)}</span>`;
+  els.sysreq.innerHTML =
+    `<span class="sysreq-title">📐 Requisitos</span>` +
+    item('disco (imágenes)', `~${system.diskApproxGB} GB`) +
+    item('RAM mín.', `${system.ramMinGB} GB`) +
+    item('RAM recom.', `${system.ramRecGB} GB`) +
+    item('CPU', `${system.cpuMin}–${system.cpuRec} cores`) +
+    (system.heaviestCase ? `<span class="sysreq-item">🔥 más pesado: <b>${esc(system.heaviestCase)}</b></span>` : '');
 }
 
 function statusMeta(status) {
@@ -80,6 +101,11 @@ function renderCases(overview) {
       const tags = [`<span class="tag">${esc(c.category)}</span>`];
       if (c.port) tags.push(`<span class="tag">🔌 :${esc(c.port)}</span>`);
       if (c.multi) tags.push(`<span class="tag">🧩 multi</span>`);
+      const r = c.requirements;
+      if (r) {
+        tags.push(`<span class="tag">💾 ${esc(fmtMB(r.imageSizeMB))}</span>`);
+        tags.push(`<span class="tag">🧠 ${esc(fmtMB(r.ramMinMB))}–${esc(fmtMB(r.ramRecMB))}</span>`);
+      }
       (c.images || []).forEach((img) => tags.push(`<span class="tag">🏷️ ${esc(img)}</span>`));
 
       const actions = [];
@@ -144,6 +170,7 @@ async function loadOverview() {
   const overview = await fetchJson('/api/wslc/overview');
   state.cases = overview.cases || [];
   renderMetrics(overview);
+  renderSystemReq(overview.system);
   renderCases(overview);
   return overview;
 }

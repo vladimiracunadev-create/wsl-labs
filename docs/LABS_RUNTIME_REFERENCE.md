@@ -32,7 +32,10 @@ flowchart TD
 - **Health**: protocolo de comprobación (`http` en todos).
 - **RAM aprox.**: memoria orientativa para levantar el caso, no una medición.
 
-Los valores de RAM son estimaciones para presupuestar el entorno.
+Los valores de RAM aquí son orientativos. Para **datos medidos** (tamaño real de
+imagen con `wslc images` y RAM en reposo con `wslc stats`, más mínimo/recomendado por
+caso y del sistema), consulta [REQUIREMENTS.md → sección "Tamaños y RAM medidos"](REQUIREMENTS.md).
+El panel muestra el 💾 tamaño y la 🧠 RAM de cada caso en su tarjeta.
 
 ---
 

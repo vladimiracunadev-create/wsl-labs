@@ -2,6 +2,17 @@
   "project": "WSL Container Center",
   "subtitle": "Levanta y controla contenedores con wslc — casos portados de docker-labs",
   "engine": "wslc",
+  "system": {
+    "diskApproxGB": 7,
+    "diskNote": "Suma de tamaños reportados (~7.4 GB); las capas base compartidas reducen el disco real.",
+    "ramMinGB": 4,
+    "ramRecGB": 8,
+    "ramComfortGB": 16,
+    "cpuMin": 2,
+    "cpuRec": 4,
+    "heaviestCase": "11-elasticsearch (~2-3 GB de RAM)",
+    "note": "Rara vez se corren los 12 a la vez. El mínimo cubre WSL2 + panel + un caso ligero; el recomendado cubre los casos pesados."
+  },
   "portBase": 8100,
   "cases": [
     {
@@ -13,8 +24,27 @@
       "port": 8101,
       "url": "http://localhost:8101",
       "healthProtocol": "http",
-      "build": [{ "image": "wsl-labs/node-api:latest", "context": "containers/01-node-api" }],
-      "containers": [{ "name": "wslc-node-api", "image": "wsl-labs/node-api:latest", "ports": ["8101:3000"] }]
+      "build": [
+        {
+          "image": "wsl-labs/node-api:latest",
+          "context": "containers/01-node-api"
+        }
+      ],
+      "containers": [
+        {
+          "name": "wslc-node-api",
+          "image": "wsl-labs/node-api:latest",
+          "ports": [
+            "8101:3000"
+          ]
+        }
+      ],
+      "requirements": {
+        "imageSizeMB": 136,
+        "ramIdleMB": 9,
+        "ramMinMB": 128,
+        "ramRecMB": 256
+      }
     },
     {
       "id": "03",
@@ -25,8 +55,27 @@
       "port": 8102,
       "url": "http://localhost:8102",
       "healthProtocol": "http",
-      "build": [{ "image": "wsl-labs/python-api:latest", "context": "containers/03-python-api" }],
-      "containers": [{ "name": "wslc-python-api", "image": "wsl-labs/python-api:latest", "ports": ["8102:5000"] }]
+      "build": [
+        {
+          "image": "wsl-labs/python-api:latest",
+          "context": "containers/03-python-api"
+        }
+      ],
+      "containers": [
+        {
+          "name": "wslc-python-api",
+          "image": "wsl-labs/python-api:latest",
+          "ports": [
+            "8102:5000"
+          ]
+        }
+      ],
+      "requirements": {
+        "imageSizeMB": 62,
+        "ramIdleMB": 21,
+        "ramMinMB": 128,
+        "ramRecMB": 256
+      }
     },
     {
       "id": "10",
@@ -37,8 +86,27 @@
       "port": 8103,
       "url": "http://localhost:8103",
       "healthProtocol": "http",
-      "build": [{ "image": "wsl-labs/go-api:latest", "context": "containers/10-go-api" }],
-      "containers": [{ "name": "wslc-go-api", "image": "wsl-labs/go-api:latest", "ports": ["8103:8080"] }]
+      "build": [
+        {
+          "image": "wsl-labs/go-api:latest",
+          "context": "containers/10-go-api"
+        }
+      ],
+      "containers": [
+        {
+          "name": "wslc-go-api",
+          "image": "wsl-labs/go-api:latest",
+          "ports": [
+            "8103:8080"
+          ]
+        }
+      ],
+      "requirements": {
+        "imageSizeMB": 15,
+        "ramIdleMB": 2,
+        "ramMinMB": 64,
+        "ramRecMB": 128
+      }
     },
     {
       "id": "06",
@@ -49,8 +117,27 @@
       "port": 8104,
       "url": "http://localhost:8104",
       "healthProtocol": "http",
-      "build": [{ "image": "wsl-labs/nginx-web:latest", "context": "containers/06-nginx-web" }],
-      "containers": [{ "name": "wslc-nginx-web", "image": "wsl-labs/nginx-web:latest", "ports": ["8104:80"] }]
+      "build": [
+        {
+          "image": "wsl-labs/nginx-web:latest",
+          "context": "containers/06-nginx-web"
+        }
+      ],
+      "containers": [
+        {
+          "name": "wslc-nginx-web",
+          "image": "wsl-labs/nginx-web:latest",
+          "ports": [
+            "8104:80"
+          ]
+        }
+      ],
+      "requirements": {
+        "imageSizeMB": 62,
+        "ramIdleMB": 8,
+        "ramMinMB": 64,
+        "ramRecMB": 128
+      }
     },
     {
       "id": "04",
@@ -62,11 +149,35 @@
       "url": "http://localhost:8105",
       "healthProtocol": "http",
       "network": "wslc-redis-net",
-      "build": [{ "image": "wsl-labs/redis-app:latest", "context": "containers/04-redis-cache" }],
+      "build": [
+        {
+          "image": "wsl-labs/redis-app:latest",
+          "context": "containers/04-redis-cache"
+        }
+      ],
       "containers": [
-        { "name": "wslc-redis", "image": "redis:7-alpine", "ports": [] },
-        { "name": "wslc-redis-app", "image": "wsl-labs/redis-app:latest", "ports": ["8105:3000"], "env": ["REDIS_HOST=wslc-redis"] }
-      ]
+        {
+          "name": "wslc-redis",
+          "image": "redis:7-alpine",
+          "ports": []
+        },
+        {
+          "name": "wslc-redis-app",
+          "image": "wsl-labs/redis-app:latest",
+          "ports": [
+            "8105:3000"
+          ],
+          "env": [
+            "REDIS_HOST=wslc-redis"
+          ]
+        }
+      ],
+      "requirements": {
+        "imageSizeMB": 175,
+        "ramIdleMB": 13,
+        "ramMinMB": 256,
+        "ramRecMB": 512
+      }
     },
     {
       "id": "05",
@@ -78,11 +189,39 @@
       "url": "http://localhost:8106",
       "healthProtocol": "http",
       "network": "wslc-pg-net",
-      "build": [{ "image": "wsl-labs/pg-app:latest", "context": "containers/05-postgres-api" }],
+      "build": [
+        {
+          "image": "wsl-labs/pg-app:latest",
+          "context": "containers/05-postgres-api"
+        }
+      ],
       "containers": [
-        { "name": "wslc-postgres", "image": "postgres:15", "ports": [], "env": ["POSTGRES_PASSWORD=wsl-labs", "POSTGRES_DB=app"] },
-        { "name": "wslc-pg-app", "image": "wsl-labs/pg-app:latest", "ports": ["8106:8000"], "env": ["PG_HOST=wslc-postgres"] }
-      ]
+        {
+          "name": "wslc-postgres",
+          "image": "postgres:15",
+          "ports": [],
+          "env": [
+            "POSTGRES_PASSWORD=wsl-labs",
+            "POSTGRES_DB=app"
+          ]
+        },
+        {
+          "name": "wslc-pg-app",
+          "image": "wsl-labs/pg-app:latest",
+          "ports": [
+            "8106:8000"
+          ],
+          "env": [
+            "PG_HOST=wslc-postgres"
+          ]
+        }
+      ],
+      "requirements": {
+        "imageSizeMB": 493,
+        "ramIdleMB": 36,
+        "ramMinMB": 512,
+        "ramRecMB": 1024
+      }
     },
     {
       "id": "07",
@@ -94,7 +233,22 @@
       "url": "http://localhost:8109",
       "healthProtocol": "http",
       "build": [],
-      "containers": [{ "name": "wslc-rabbitmq", "image": "rabbitmq:3-management", "ports": ["8109:15672", "5672:5672"] }]
+      "containers": [
+        {
+          "name": "wslc-rabbitmq",
+          "image": "rabbitmq:3-management",
+          "ports": [
+            "8109:15672",
+            "5672:5672"
+          ]
+        }
+      ],
+      "requirements": {
+        "imageSizeMB": 252,
+        "ramIdleMB": 148,
+        "ramMinMB": 512,
+        "ramRecMB": 1024
+      }
     },
     {
       "id": "02",
@@ -106,11 +260,39 @@
       "url": "http://localhost:8107",
       "healthProtocol": "http",
       "network": "wslc-lamp-net",
-      "build": [{ "image": "wsl-labs/php-lamp:latest", "context": "containers/02-php-lamp" }],
+      "build": [
+        {
+          "image": "wsl-labs/php-lamp:latest",
+          "context": "containers/02-php-lamp"
+        }
+      ],
       "containers": [
-        { "name": "wslc-mariadb", "image": "mariadb:10.6", "ports": [], "env": ["MARIADB_ROOT_PASSWORD=wsl-labs", "MARIADB_DATABASE=app"] },
-        { "name": "wslc-php", "image": "wsl-labs/php-lamp:latest", "ports": ["8107:80"], "env": ["DB_HOST=wslc-mariadb"] }
-      ]
+        {
+          "name": "wslc-mariadb",
+          "image": "mariadb:10.6",
+          "ports": [],
+          "env": [
+            "MARIADB_ROOT_PASSWORD=wsl-labs",
+            "MARIADB_DATABASE=app"
+          ]
+        },
+        {
+          "name": "wslc-php",
+          "image": "wsl-labs/php-lamp:latest",
+          "ports": [
+            "8107:80"
+          ],
+          "env": [
+            "DB_HOST=wslc-mariadb"
+          ]
+        }
+      ],
+      "requirements": {
+        "imageSizeMB": 808,
+        "ramIdleMB": 76,
+        "ramMinMB": 512,
+        "ramRecMB": 1024
+      }
     },
     {
       "id": "08",
@@ -124,9 +306,27 @@
       "network": "wslc-obs-net",
       "build": [],
       "containers": [
-        { "name": "wslc-prometheus", "image": "prom/prometheus", "ports": ["8111:9090"] },
-        { "name": "wslc-grafana", "image": "grafana/grafana", "ports": ["8110:3000"] }
-      ]
+        {
+          "name": "wslc-prometheus",
+          "image": "prom/prometheus",
+          "ports": [
+            "8111:9090"
+          ]
+        },
+        {
+          "name": "wslc-grafana",
+          "image": "grafana/grafana",
+          "ports": [
+            "8110:3000"
+          ]
+        }
+      ],
+      "requirements": {
+        "imageSizeMB": 1406,
+        "ramIdleMB": 177,
+        "ramMinMB": 768,
+        "ramRecMB": 1536
+      }
     },
     {
       "id": "09",
@@ -138,11 +338,35 @@
       "url": "http://localhost:8112",
       "healthProtocol": "http",
       "network": "wslc-multi-net",
-      "build": [{ "image": "wsl-labs/multi-backend:latest", "context": "containers/09-multi-service" }],
+      "build": [
+        {
+          "image": "wsl-labs/multi-backend:latest",
+          "context": "containers/09-multi-service"
+        }
+      ],
       "containers": [
-        { "name": "wslc-mongo", "image": "mongo:7", "ports": [] },
-        { "name": "wslc-multi-backend", "image": "wsl-labs/multi-backend:latest", "ports": ["8112:3000"], "env": ["MONGO_HOST=wslc-mongo"] }
-      ]
+        {
+          "name": "wslc-mongo",
+          "image": "mongo:7",
+          "ports": []
+        },
+        {
+          "name": "wslc-multi-backend",
+          "image": "wsl-labs/multi-backend:latest",
+          "ports": [
+            "8112:3000"
+          ],
+          "env": [
+            "MONGO_HOST=wslc-mongo"
+          ]
+        }
+      ],
+      "requirements": {
+        "imageSizeMB": 1012,
+        "ramIdleMB": 83,
+        "ramMinMB": 512,
+        "ramRecMB": 1024
+      }
     },
     {
       "id": "11",
@@ -155,8 +379,25 @@
       "healthProtocol": "http",
       "build": [],
       "containers": [
-        { "name": "wslc-elasticsearch", "image": "elasticsearch:8.11.0", "ports": ["8113:9200"], "env": ["discovery.type=single-node", "xpack.security.enabled=false", "ES_JAVA_OPTS=-Xms512m -Xmx512m"] }
-      ]
+        {
+          "name": "wslc-elasticsearch",
+          "image": "elasticsearch:8.11.0",
+          "ports": [
+            "8113:9200"
+          ],
+          "env": [
+            "discovery.type=single-node",
+            "xpack.security.enabled=false",
+            "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+          ]
+        }
+      ],
+      "requirements": {
+        "imageSizeMB": 1410,
+        "ramIdleMB": 910,
+        "ramMinMB": 2048,
+        "ramRecMB": 3072
+      }
     },
     {
       "id": "12",
@@ -168,7 +409,21 @@
       "url": "http://localhost:8114",
       "healthProtocol": "http",
       "build": [],
-      "containers": [{ "name": "wslc-jenkins", "image": "jenkins/jenkins:lts", "ports": ["8114:8080"] }]
+      "containers": [
+        {
+          "name": "wslc-jenkins",
+          "image": "jenkins/jenkins:lts",
+          "ports": [
+            "8114:8080"
+          ]
+        }
+      ],
+      "requirements": {
+        "imageSizeMB": 490,
+        "ramIdleMB": 702,
+        "ramMinMB": 1024,
+        "ramRecMB": 2048
+      }
     }
   ]
 }
