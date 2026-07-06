@@ -1,0 +1,174 @@
+{
+  "project": "WSL Container Center",
+  "subtitle": "Levanta y controla contenedores con wslc — casos portados de docker-labs",
+  "engine": "wslc",
+  "portBase": 8100,
+  "cases": [
+    {
+      "id": "01",
+      "name": "node-api",
+      "title": "API Node.js",
+      "description": "API REST mínima en Node.js (imagen node:20-alpine, http nativo).",
+      "category": "starter",
+      "port": 8101,
+      "url": "http://localhost:8101",
+      "healthProtocol": "http",
+      "build": [{ "image": "wsl-labs/node-api:latest", "context": "containers/01-node-api" }],
+      "containers": [{ "name": "wslc-node-api", "image": "wsl-labs/node-api:latest", "ports": ["8101:3000"] }]
+    },
+    {
+      "id": "03",
+      "name": "python-api",
+      "title": "API Python (Flask)",
+      "description": "API REST en Flask (imagen python:3.12-alpine).",
+      "category": "starter",
+      "port": 8102,
+      "url": "http://localhost:8102",
+      "healthProtocol": "http",
+      "build": [{ "image": "wsl-labs/python-api:latest", "context": "containers/03-python-api" }],
+      "containers": [{ "name": "wslc-python-api", "image": "wsl-labs/python-api:latest", "ports": ["8102:5000"] }]
+    },
+    {
+      "id": "10",
+      "name": "go-api",
+      "title": "API Go",
+      "description": "API REST en Go (net/http), imagen compilada multi-stage.",
+      "category": "starter",
+      "port": 8103,
+      "url": "http://localhost:8103",
+      "healthProtocol": "http",
+      "build": [{ "image": "wsl-labs/go-api:latest", "context": "containers/10-go-api" }],
+      "containers": [{ "name": "wslc-go-api", "image": "wsl-labs/go-api:latest", "ports": ["8103:8080"] }]
+    },
+    {
+      "id": "06",
+      "name": "nginx-web",
+      "title": "Nginx web",
+      "description": "Servidor web/estático con Nginx (imagen nginx:alpine).",
+      "category": "starter",
+      "port": 8104,
+      "url": "http://localhost:8104",
+      "healthProtocol": "http",
+      "build": [{ "image": "wsl-labs/nginx-web:latest", "context": "containers/06-nginx-web" }],
+      "containers": [{ "name": "wslc-nginx-web", "image": "wsl-labs/nginx-web:latest", "ports": ["8104:80"] }]
+    },
+    {
+      "id": "04",
+      "name": "redis-cache",
+      "title": "Cache Redis + app",
+      "description": "App Node que consulta Redis (redis:7-alpine) por una red wslc.",
+      "category": "platform",
+      "port": 8105,
+      "url": "http://localhost:8105",
+      "healthProtocol": "http",
+      "network": "wslc-redis-net",
+      "build": [{ "image": "wsl-labs/redis-app:latest", "context": "containers/04-redis-cache" }],
+      "containers": [
+        { "name": "wslc-redis", "image": "redis:7-alpine", "ports": [] },
+        { "name": "wslc-redis-app", "image": "wsl-labs/redis-app:latest", "ports": ["8105:3000"], "env": ["REDIS_HOST=wslc-redis"] }
+      ]
+    },
+    {
+      "id": "05",
+      "name": "postgres-api",
+      "title": "API + PostgreSQL",
+      "description": "API Python conectada a PostgreSQL (postgres:15) por una red wslc.",
+      "category": "platform",
+      "port": 8106,
+      "url": "http://localhost:8106",
+      "healthProtocol": "http",
+      "network": "wslc-pg-net",
+      "build": [{ "image": "wsl-labs/pg-app:latest", "context": "containers/05-postgres-api" }],
+      "containers": [
+        { "name": "wslc-postgres", "image": "postgres:15", "ports": [], "env": ["POSTGRES_PASSWORD=wsl-labs", "POSTGRES_DB=app"] },
+        { "name": "wslc-pg-app", "image": "wsl-labs/pg-app:latest", "ports": ["8106:8000"], "env": ["PG_HOST=wslc-postgres"] }
+      ]
+    },
+    {
+      "id": "07",
+      "name": "rabbitmq",
+      "title": "RabbitMQ (mensajería)",
+      "description": "Broker RabbitMQ con panel de administración (rabbitmq:3-management).",
+      "category": "infra",
+      "port": 8109,
+      "url": "http://localhost:8109",
+      "healthProtocol": "http",
+      "build": [],
+      "containers": [{ "name": "wslc-rabbitmq", "image": "rabbitmq:3-management", "ports": ["8109:15672", "5672:5672"] }]
+    },
+    {
+      "id": "02",
+      "name": "php-lamp",
+      "title": "LAMP (PHP + MariaDB)",
+      "description": "PHP+Apache con MariaDB por una red wslc (stack LAMP).",
+      "category": "platform",
+      "port": 8107,
+      "url": "http://localhost:8107",
+      "healthProtocol": "http",
+      "network": "wslc-lamp-net",
+      "build": [{ "image": "wsl-labs/php-lamp:latest", "context": "containers/02-php-lamp" }],
+      "containers": [
+        { "name": "wslc-mariadb", "image": "mariadb:10.6", "ports": [], "env": ["MARIADB_ROOT_PASSWORD=wsl-labs", "MARIADB_DATABASE=app"] },
+        { "name": "wslc-php", "image": "wsl-labs/php-lamp:latest", "ports": ["8107:80"], "env": ["DB_HOST=wslc-mariadb"] }
+      ]
+    },
+    {
+      "id": "08",
+      "name": "prometheus-grafana",
+      "title": "Prometheus + Grafana",
+      "description": "Observabilidad: Prometheus + Grafana por una red wslc.",
+      "category": "infra",
+      "port": 8110,
+      "url": "http://localhost:8110",
+      "healthProtocol": "http",
+      "network": "wslc-obs-net",
+      "build": [],
+      "containers": [
+        { "name": "wslc-prometheus", "image": "prom/prometheus", "ports": ["8111:9090"] },
+        { "name": "wslc-grafana", "image": "grafana/grafana", "ports": ["8110:3000"] }
+      ]
+    },
+    {
+      "id": "09",
+      "name": "multi-service",
+      "title": "App multi-servicio (Mongo)",
+      "description": "Backend Node + MongoDB (mongo:7) por una red wslc.",
+      "category": "platform",
+      "port": 8112,
+      "url": "http://localhost:8112",
+      "healthProtocol": "http",
+      "network": "wslc-multi-net",
+      "build": [{ "image": "wsl-labs/multi-backend:latest", "context": "containers/09-multi-service" }],
+      "containers": [
+        { "name": "wslc-mongo", "image": "mongo:7", "ports": [] },
+        { "name": "wslc-multi-backend", "image": "wsl-labs/multi-backend:latest", "ports": ["8112:3000"], "env": ["MONGO_HOST=wslc-mongo"] }
+      ]
+    },
+    {
+      "id": "11",
+      "name": "elasticsearch",
+      "title": "Elasticsearch",
+      "description": "Motor de búsqueda Elasticsearch 8 (nodo único, seguridad off).",
+      "category": "infra",
+      "port": 8113,
+      "url": "http://localhost:8113",
+      "healthProtocol": "http",
+      "build": [],
+      "containers": [
+        { "name": "wslc-elasticsearch", "image": "elasticsearch:8.11.0", "ports": ["8113:9200"], "env": ["discovery.type=single-node", "xpack.security.enabled=false", "ES_JAVA_OPTS=-Xms512m -Xmx512m"] }
+      ]
+    },
+    {
+      "id": "12",
+      "name": "jenkins",
+      "title": "Jenkins CI",
+      "description": "Servidor de integración continua Jenkins LTS.",
+      "category": "infra",
+      "port": 8114,
+      "url": "http://localhost:8114",
+      "healthProtocol": "http",
+      "build": [],
+      "containers": [{ "name": "wslc-jenkins", "image": "jenkins/jenkins:lts", "ports": ["8114:8080"] }]
+    }
+  ]
+}

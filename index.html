@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>WSL Control Center</title>
+  <title>WSL Container Center</title>
   <link rel="stylesheet" href="/dashboard.css">
 </head>
 <body>
@@ -11,58 +11,47 @@
     <!-- Hero ─────────────────────────────────────────────────────────────── -->
     <section class="hero">
       <div class="hero-copy">
-        <span class="eyebrow">WSL Workspace</span>
-        <h1>WSL Control Center</h1>
+        <span class="eyebrow">WSL · wslc</span>
+        <h1>WSL Container Center</h1>
         <p id="hero-subtitle">
-          Launcher en Windows para servicios Linux que viven dentro de WSL2. Levanta, detiene y
-          supervisa cada laboratorio en localhost sin salir de este panel.
+          Levanta y controla <b>contenedores</b> con <code>wslc</code>, el motor de contenedores nativo
+          de WSL. Construye la imagen (📦), levántala (▶) y sigue su estado en localhost.
         </p>
       </div>
 
       <div class="hero-actions">
         <button id="refresh-all" class="btn btn-primary">🔃 Actualizar</button>
-        <button id="start-all" class="btn btn-secondary">▶ Levantar todo</button>
-        <button id="stop-all" class="btn btn-secondary">⏹ Bajar todo</button>
+        <button id="up-all" class="btn btn-secondary">▶ Levantar todo</button>
+        <button id="down-all" class="btn btn-secondary">⏹ Bajar todo</button>
         <a class="btn btn-secondary" href="https://github.com/vladimiracunadev-create/wsl-labs" target="_blank" rel="noreferrer">📚 Docs</a>
         <span id="generated-at" class="tag">Sin lecturas</span>
       </div>
 
       <div class="metrics">
         <div class="metric">
-          <div class="metric-label">Servicios totales</div>
+          <div class="metric-label">Casos</div>
           <div id="metric-total" class="metric-value">0</div>
         </div>
         <div class="metric">
-          <div class="metric-label">Saludables</div>
-          <div id="metric-healthy" class="metric-value">0</div>
+          <div class="metric-label">Corriendo</div>
+          <div id="metric-running" class="metric-value">0</div>
         </div>
         <div class="metric">
           <div class="metric-label">Detenidos</div>
           <div id="metric-stopped" class="metric-value">0</div>
         </div>
         <div class="metric">
-          <div class="metric-label">Distro WSL</div>
-          <div id="metric-distro" class="metric-value">—</div>
+          <div class="metric-label">Motor</div>
+          <div id="metric-engine" class="metric-value">—</div>
         </div>
       </div>
     </section>
 
-    <!-- Grid de labs ─────────────────────────────────────────────────────── -->
+    <!-- Grid de casos de contenedores ────────────────────────────────────── -->
     <div class="section-head">
       <div>
-        <h2>Laboratorios</h2>
-        <p class="section-copy">Servicios Linux controlados vía wsl.exe. Los de tipo learning solo documentan.</p>
-      </div>
-    </div>
-    <div class="lab-grid" id="lab-grid">
-      <div class="empty">Cargando laboratorios…</div>
-    </div>
-
-    <!-- Contenedores WSLC ────────────────────────────────────────────────── -->
-    <div class="section-head">
-      <div>
-        <h2>🐳 Contenedores (WSLC)</h2>
-        <p class="section-copy">Imágenes y contenedores reales con <code>wslc</code>, el motor de contenedores nativo de WSL. Construye la imagen (📦) y ejecútala (▶).</p>
+        <h2>🐳 Contenedores</h2>
+        <p class="section-copy">Casos portados de docker-labs, ejecutados con <code>wslc</code>. Multi-contenedor y redes incluidos.</p>
       </div>
     </div>
     <div class="lab-grid" id="wslc-grid">
@@ -72,7 +61,7 @@
     <!-- Logs ─────────────────────────────────────────────────────────────── -->
     <section class="logs">
       <h2 id="logs-title">Salida operativa</h2>
-      <pre id="logs-output">Actualiza el panel o abre los logs de un laboratorio para ver aquí lo que ocurre dentro de WSL.</pre>
+      <pre id="logs-output">Construye o levanta un caso para ver aquí la salida de wslc.</pre>
     </section>
   </main>
 

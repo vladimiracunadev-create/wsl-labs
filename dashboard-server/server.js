@@ -472,7 +472,7 @@ async function handleWslAction(action, body) {
 // ── Contenedores WSLC (motor de contenedores nativo de WSL) ─────────────────
 // A diferencia de los servicios (demonios en la distro via `wsl -u root`), aqui
 // gestionamos IMAGENES y CONTENEDORES reales con `wslc.exe`, que corre en Windows.
-const WSLC_CONFIG_PATH = path.join(REPO_ROOT, 'wslc', 'wslc.config.json');
+const WSLC_CONFIG_PATH = path.join(REPO_ROOT, 'containers', 'containers.config.json');
 let wslcPathCache; // undefined = sin resolver
 
 // Localiza wslc.exe: env WSL_LABS_WSLC, ruta estandar de WSL, o el PATH.
@@ -531,15 +531,24 @@ function runWslc(args, timeoutMs = EXEC_TIMEOUT_MS) {
 function loadWslcConfig() {
   const raw = fs.readFileSync(WSLC_CONFIG_PATH, 'utf8');
   const config = JSON.parse(raw);
-  if (!Array.isArray(config.images)) throw new Error('wslc.config.json no contiene "images".');
+  if (!Array.isArray(config.cases)) throw new Error('containers.config.json no contiene "cases".');
   return config;
 }
 
-// Overview del track de contenedores: motor disponible + estado por imagen.
+// El contenedor "principal" de un caso es el que publica el puerto del caso.
+function primaryContainer(c) {
+  const list = c.containers || [];
+  return (
+    list.find((k) => (k.ports || []).some((p) => String(p).startsWith(`${c.port}:`))) ||
+    list[list.length - 1]
+  );
+}
+
+// Overview del control de contenedores: motor disponible + estado por CASO.
 async function buildWslcOverview() {
   let config;
   try { config = loadWslcConfig(); } catch (e) {
-    return { available: false, engine: 'wslc', reason: e.message, images: [], totals: { total: 0 } };
+    return { available: false, engine: 'wslc', reason: e.message, cases: [], totals: { total: 0 } };
   }
   const ver = await runWslc(['version'], 5_000);
   const available = ver.ok;
@@ -547,34 +556,39 @@ async function buildWslcOverview() {
   const imagesText = available ? (await runWslc(['images'], 8_000)).stdout || '' : '';
   const listText = available ? (await runWslc(['list'], 8_000)).stdout || '' : '';
 
-  const images = await Promise.all(
-    config.images.map(async (img) => {
-      const repo = String(img.image).split(':')[0];
-      const built = available && imagesText.includes(repo);
-      const running = available && new RegExp(`\\b${img.containerName}\\b`).test(listText);
+  const cases = await Promise.all(
+    config.cases.map(async (c) => {
+      const builds = c.build || [];
+      const needsBuild = builds.length > 0;
+      const built = !needsBuild || builds.every((b) => imagesText.includes(String(b.image).split(':')[0]));
+      const prim = primaryContainer(c);
+      const running = available && prim && new RegExp(`\\b${prim.name}\\b`).test(listText);
       let status = 'unavailable';
       let statusDetail = 'WSLC no disponible';
       if (available) {
         if (running) {
-          const ok = img.healthProtocol === 'http' ? await httpCheck(img.port) : await tcpCheck(img.port);
+          const ok = c.healthProtocol === 'tcp' ? await tcpCheck(c.port) : await httpCheck(c.port);
           status = ok ? 'running' : 'degraded';
-          statusDetail = ok ? 'Contenedor arriba' : 'Contenedor arriba, sin responder';
-        } else if (built) {
-          status = 'stopped';
-          statusDetail = 'Imagen construida, sin contenedor';
-        } else {
+          statusDetail = ok ? 'Contenedor(es) arriba' : 'Arriba, aún respondiendo';
+        } else if (needsBuild && !built) {
           status = 'missing';
-          statusDetail = 'Imagen no construida';
+          statusDetail = 'Imagen sin construir';
+        } else {
+          status = 'stopped';
+          statusDetail = 'Listo para levantar';
         }
       }
       return {
-        id: img.id,
-        name: img.name,
-        description: img.description || '',
-        image: img.image,
-        port: img.port || null,
-        url: img.url || null,
-        containerName: img.containerName,
+        id: c.id,
+        name: c.name,
+        title: c.title || c.name,
+        description: c.description || '',
+        category: c.category || 'starter',
+        port: c.port || null,
+        url: c.url || null,
+        images: (c.containers || []).map((k) => k.image),
+        multi: (c.containers || []).length > 1,
+        needsBuild,
         built,
         running,
         status,
@@ -586,55 +600,81 @@ async function buildWslcOverview() {
   return {
     available,
     engine: 'wslc',
-    project: config.project || 'Contenedores (WSLC)',
+    project: config.project || 'WSL Container Center',
     subtitle: config.subtitle || '',
     wslcPath: resolveWslcPath(),
     hint: available ? null : 'wslc no encontrado. Actualiza WSL: wsl --update --pre-release',
     generatedAt: new Date().toISOString(),
-    images,
+    cases,
     totals: {
-      total: images.length,
-      running: images.filter((i) => i.status === 'running').length,
-      stopped: images.filter((i) => i.status === 'stopped').length,
-      missing: images.filter((i) => i.status === 'missing').length,
+      total: cases.length,
+      running: cases.filter((c) => c.status === 'running').length,
+      stopped: cases.filter((c) => c.status === 'stopped').length,
+      missing: cases.filter((c) => c.status === 'missing').length,
     },
   };
 }
 
-// Acciones sobre una imagen/contenedor: build | run | stop | logs.
+// Acciones sobre un CASO: build | up | down | logs. Soporta multi-contenedor + red.
 async function handleWslcAction(action, body) {
   const config = loadWslcConfig();
   const id = body && typeof body.id === 'string' ? body.id : null;
   if (!id || !/^[\w-]+$/.test(id)) {
     return { statusCode: 400, payload: { ok: false, error: 'Parametro "id" invalido o ausente.' } };
   }
-  const img = config.images.find((i) => i.id === id);
-  if (!img) return { statusCode: 404, payload: { ok: false, error: 'Imagen no encontrada.' } };
+  const c = config.cases.find((k) => k.id === id);
+  if (!c) return { statusCode: 404, payload: { ok: false, error: 'Caso no encontrado.' } };
 
-  let args;
-  let timeout = EXEC_TIMEOUT_MS;
   if (action === 'build') {
-    const context = path.join(REPO_ROOT, img.context);
-    args = ['build', '-t', img.image, context];
-    timeout = INSTALL_TIMEOUT_MS; // el build puede tardar (pull de la base, capas)
-  } else if (action === 'run') {
-    // Idempotente: elimina un contenedor previo con el mismo nombre y arranca.
-    await runWslc(['stop', img.containerName], 15_000);
-    await runWslc(['rm', img.containerName], 15_000);
-    args = ['run', '-d', '--name', img.containerName, '-p', `${img.port}:${img.containerPort}`, img.image];
-  } else if (action === 'stop') {
-    await runWslc(['stop', img.containerName], 20_000);
-    args = ['rm', img.containerName];
-  } else if (action === 'logs') {
-    args = ['logs', img.containerName];
-    timeout = LOGS_TIMEOUT_MS;
-  } else {
-    return { statusCode: 400, payload: { ok: false, error: `Accion "${action}" no soportada.` } };
+    const builds = c.build || [];
+    if (!builds.length) {
+      return { statusCode: 200, payload: { ok: true, id, action, output: 'Caso con imágenes públicas: no requiere build.' } };
+    }
+    let out = '';
+    for (const b of builds) {
+      const r = await runWslc(['build', '-t', b.image, path.join(REPO_ROOT, b.context)], INSTALL_TIMEOUT_MS);
+      out += `[build ${b.image}] ${r.ok ? 'OK' : 'FALLO'}\n${r.output || ''}\n`;
+      if (!r.ok) return { statusCode: 500, payload: { ok: false, id, action, output: out.trim() } };
+    }
+    return { statusCode: 200, payload: { ok: true, id, action, output: out.trim() } };
   }
 
-  const result = await runWslc(args, timeout);
-  const output = action === 'logs' ? takeLastLines(result.output || '(sin output)') : (result.output || '(sin output)');
-  return { statusCode: result.ok ? 200 : 500, payload: { ok: result.ok, id, action, exitCode: result.exitCode, output } };
+  if (action === 'up') {
+    if (c.network) await runWslc(['network', 'create', c.network], 15_000); // si ya existe, se ignora
+    let out = '';
+    for (const k of c.containers || []) {
+      await runWslc(['stop', k.name], 15_000);
+      await runWslc(['rm', k.name], 15_000);
+      const args = ['run', '-d', '--name', k.name];
+      if (c.network) args.push('--network', c.network);
+      for (const p of k.ports || []) args.push('-p', p);
+      for (const e of k.env || []) args.push('-e', e);
+      args.push(k.image);
+      const r = await runWslc(args, INSTALL_TIMEOUT_MS);
+      out += `[run ${k.name}] ${r.ok ? 'OK' : 'FALLO'}\n${r.output || ''}\n`;
+      if (!r.ok) return { statusCode: 500, payload: { ok: false, id, action, output: out.trim() } };
+    }
+    return { statusCode: 200, payload: { ok: true, id, action, output: out.trim() } };
+  }
+
+  if (action === 'down') {
+    let out = '';
+    for (const k of c.containers || []) {
+      await runWslc(['stop', k.name], 20_000);
+      const r = await runWslc(['rm', k.name], 20_000);
+      out += `[rm ${k.name}] ${r.ok ? 'OK' : '-'}\n`;
+    }
+    if (c.network) await runWslc(['network', 'rm', c.network], 15_000);
+    return { statusCode: 200, payload: { ok: true, id, action, output: out.trim() || '(sin output)' } };
+  }
+
+  if (action === 'logs') {
+    const prim = primaryContainer(c);
+    const r = await runWslc(['logs', prim.name], LOGS_TIMEOUT_MS);
+    return { statusCode: 200, payload: { ok: r.ok, id, action, output: takeLastLines(r.output || '(sin output)') } };
+  }
+
+  return { statusCode: 400, payload: { ok: false, error: `Accion "${action}" no soportada.` } };
 }
 
 // ── Router de API ───────────────────────────────────────────────────────────
@@ -651,8 +691,8 @@ async function handleApi(req, res, pathname) {
     return;
   }
 
-  // POST /api/wslc/build | run | stop | logs
-  const wslcMatch = pathname.match(/^\/api\/wslc\/(build|run|stop|logs)$/);
+  // POST /api/wslc/build | up | down | logs
+  const wslcMatch = pathname.match(/^\/api\/wslc\/(build|up|down|logs)$/);
   if (wslcMatch && req.method === 'POST') {
     const body = await readBody(req);
     const { statusCode, payload } = await handleWslcAction(wslcMatch[1], body);
