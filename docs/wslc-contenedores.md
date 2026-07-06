@@ -167,6 +167,36 @@ El panel localiza el motor en `C:\Program Files\WSL\wslc.exe` y avisa si no est�
 
 ---
 
+## 🚦 Límites de recursos y 💽 persistencia
+
+El panel aplica automáticamente, al **Levantar** cada caso:
+
+- **Límites de recursos** (`wslc run -m <RAM>M --cpus <n>`): la RAM tope sale del
+  valor **recomendado medido** de cada caso (ver [REQUIREMENTS.md](REQUIREMENTS.md))
+  y la CPU según la categoría (`starter` 0.5 · `platform` 1 · `infra` 2). El panel
+  lo muestra como `🚦 tope …` en cada tarjeta. *(WSL puede avisar "Memory limited
+  without swap" — es inocuo; el límite de RAM se aplica igual.)*
+- **Volúmenes persistentes** (`wslc volume create` + `-v nombre:/ruta`): las bases
+  de datos (PostgreSQL, MariaDB, MongoDB, Elasticsearch, RabbitMQ, Jenkins) montan un
+  **volumen con nombre** en su directorio de datos. Así, al **Bajar** un caso se
+  eliminan los contenedores **pero el volumen se conserva**: los datos sobreviven al
+  siguiente **Levantar**. El panel marca estos casos con `💽 persistente`.
+
+```powershell
+# Equivalente manual de lo que hace el panel para postgres-api:
+wslc volume create wslc-pgdata
+wslc run -d --name wslc-postgres --network wslc-pg-net -m 1024M --cpus 1 \
+  -e POSTGRES_PASSWORD=wsl-labs -e POSTGRES_DB=app \
+  -v wslc-pgdata:/var/lib/postgresql/data postgres:15
+```
+
+> [!TIP]
+> Para **borrar** también los datos de un caso, elimina su volumen a mano:
+> `wslc volume ls` y `wslc volume rm <nombre>` (o `wslc volume prune` para los
+> huérfanos). Ver la [referencia CLI de `wslc`](wslc-cli-referencia.md).
+
+---
+
 ## 🔗 Ver también
 
 - [🧰 Referencia completa de la CLI de `wslc`](wslc-cli-referencia.md)

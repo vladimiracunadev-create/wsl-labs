@@ -106,6 +106,10 @@ function renderCases(overview) {
         tags.push(`<span class="tag">💾 ${esc(fmtMB(r.imageSizeMB))}</span>`);
         tags.push(`<span class="tag">🧠 ${esc(fmtMB(r.ramMinMB))}–${esc(fmtMB(r.ramRecMB))}</span>`);
       }
+      if (c.limits) {
+        tags.push(`<span class="tag">🚦 tope ${esc(fmtMB(c.limits.memMB))} · ${esc(c.limits.cpus)} CPU</span>`);
+      }
+      if (c.persistent) tags.push(`<span class="tag">💽 persistente</span>`);
       (c.images || []).forEach((img) => tags.push(`<span class="tag">🏷️ ${esc(img)}</span>`));
 
       const actions = [];

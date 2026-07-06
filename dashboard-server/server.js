@@ -244,6 +244,8 @@ async function buildOverview() {
         images: (c.containers || []).map((k) => k.image),
         multi: (c.containers || []).length > 1,
         requirements: c.requirements || null,
+        limits: c.limits || null,
+        persistent: (c.containers || []).some((k) => (k.volumes || []).length > 0),
         needsBuild,
         built,
         running,
@@ -302,10 +304,19 @@ async function handleAction(action, body) {
     for (const k of c.containers || []) {
       await runWslc(['stop', k.name], 15_000);
       await runWslc(['rm', k.name], 15_000);
+      // Volúmenes persistentes: crear el volumen con nombre (si no existe) para
+      // que los datos sobrevivan a bajar/levantar el contenedor.
+      for (const v of k.volumes || []) {
+        await runWslc(['volume', 'create', String(v).split(':')[0]], 15_000);
+      }
       const args = ['run', '-d', '--name', k.name];
       if (c.network) args.push('--network', c.network);
+      // Límites de recursos por caso (RAM y CPU).
+      if (c.limits && c.limits.memMB) args.push('-m', `${c.limits.memMB}M`);
+      if (c.limits && c.limits.cpus) args.push('--cpus', String(c.limits.cpus));
       for (const p of k.ports || []) args.push('-p', p);
       for (const e of k.env || []) args.push('-e', e);
+      for (const v of k.volumes || []) args.push('-v', v);
       args.push(k.image);
       const r = await runWslc(args, BUILD_TIMEOUT_MS);
       out += `[run ${k.name}] ${r.ok ? 'OK' : 'FALLO'}\n${r.output || ''}\n`;

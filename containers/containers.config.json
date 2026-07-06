@@ -44,6 +44,10 @@
         "ramIdleMB": 9,
         "ramMinMB": 128,
         "ramRecMB": 256
+      },
+      "limits": {
+        "memMB": 256,
+        "cpus": 0.5
       }
     },
     {
@@ -75,6 +79,10 @@
         "ramIdleMB": 21,
         "ramMinMB": 128,
         "ramRecMB": 256
+      },
+      "limits": {
+        "memMB": 256,
+        "cpus": 0.5
       }
     },
     {
@@ -106,6 +114,10 @@
         "ramIdleMB": 2,
         "ramMinMB": 64,
         "ramRecMB": 128
+      },
+      "limits": {
+        "memMB": 128,
+        "cpus": 0.5
       }
     },
     {
@@ -137,6 +149,10 @@
         "ramIdleMB": 8,
         "ramMinMB": 64,
         "ramRecMB": 128
+      },
+      "limits": {
+        "memMB": 128,
+        "cpus": 0.5
       }
     },
     {
@@ -177,6 +193,10 @@
         "ramIdleMB": 13,
         "ramMinMB": 256,
         "ramRecMB": 512
+      },
+      "limits": {
+        "memMB": 512,
+        "cpus": 1.0
       }
     },
     {
@@ -203,6 +223,9 @@
           "env": [
             "POSTGRES_PASSWORD=wsl-labs",
             "POSTGRES_DB=app"
+          ],
+          "volumes": [
+            "wslc-pgdata:/var/lib/postgresql/data"
           ]
         },
         {
@@ -221,6 +244,10 @@
         "ramIdleMB": 36,
         "ramMinMB": 512,
         "ramRecMB": 1024
+      },
+      "limits": {
+        "memMB": 1024,
+        "cpus": 1.0
       }
     },
     {
@@ -240,6 +267,9 @@
           "ports": [
             "8109:15672",
             "5672:5672"
+          ],
+          "volumes": [
+            "wslc-rabbitmqdata:/var/lib/rabbitmq"
           ]
         }
       ],
@@ -248,6 +278,10 @@
         "ramIdleMB": 148,
         "ramMinMB": 512,
         "ramRecMB": 1024
+      },
+      "limits": {
+        "memMB": 1024,
+        "cpus": 2.0
       }
     },
     {
@@ -274,6 +308,9 @@
           "env": [
             "MARIADB_ROOT_PASSWORD=wsl-labs",
             "MARIADB_DATABASE=app"
+          ],
+          "volumes": [
+            "wslc-mariadbdata:/var/lib/mysql"
           ]
         },
         {
@@ -292,6 +329,10 @@
         "ramIdleMB": 76,
         "ramMinMB": 512,
         "ramRecMB": 1024
+      },
+      "limits": {
+        "memMB": 1024,
+        "cpus": 1.0
       }
     },
     {
@@ -326,6 +367,10 @@
         "ramIdleMB": 177,
         "ramMinMB": 768,
         "ramRecMB": 1536
+      },
+      "limits": {
+        "memMB": 1536,
+        "cpus": 2.0
       }
     },
     {
@@ -348,7 +393,10 @@
         {
           "name": "wslc-mongo",
           "image": "mongo:7",
-          "ports": []
+          "ports": [],
+          "volumes": [
+            "wslc-mongodata:/data/db"
+          ]
         },
         {
           "name": "wslc-multi-backend",
@@ -366,6 +414,10 @@
         "ramIdleMB": 83,
         "ramMinMB": 512,
         "ramRecMB": 1024
+      },
+      "limits": {
+        "memMB": 1024,
+        "cpus": 1.0
       }
     },
     {
@@ -389,6 +441,9 @@
             "discovery.type=single-node",
             "xpack.security.enabled=false",
             "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+          ],
+          "volumes": [
+            "wslc-esdata:/usr/share/elasticsearch/data"
           ]
         }
       ],
@@ -397,6 +452,10 @@
         "ramIdleMB": 910,
         "ramMinMB": 2048,
         "ramRecMB": 3072
+      },
+      "limits": {
+        "memMB": 3072,
+        "cpus": 2.0
       }
     },
     {
@@ -415,6 +474,9 @@
           "image": "jenkins/jenkins:lts",
           "ports": [
             "8114:8080"
+          ],
+          "volumes": [
+            "wslc-jenkinsdata:/var/jenkins_home"
           ]
         }
       ],
@@ -423,6 +485,10 @@
         "ramIdleMB": 702,
         "ramMinMB": 1024,
         "ramRecMB": 2048
+      },
+      "limits": {
+        "memMB": 2048,
+        "cpus": 2.0
       }
     }
   ]

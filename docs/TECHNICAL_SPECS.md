@@ -142,7 +142,10 @@ Campos de cada caso:
 | `healthProtocol` | todos | `http` (todos los casos actuales) |
 | `network` | multi-contenedor | Nombre de la red wslc a crear (p. ej. `wslc-pg-net`) |
 | `build[]` | casos custom | Lista de `{ image, context }` a construir con `wslc build` |
-| `containers[]` | todos | Lista de `{ name, image, ports[], env[] }` a ejecutar con `wslc run` |
+| `containers[]` | todos | Lista de `{ name, image, ports[], env[], volumes[] }` a ejecutar con `wslc run` |
+| `requirements` | todos | Datos medidos: `{ imageSizeMB, ramIdleMB, ramMinMB, ramRecMB }` |
+| `limits` | todos | Tope de recursos aplicado al `run`: `{ memMB, cpus }` (`-m`, `--cpus`) |
+| `containers[].volumes[]` | casos con datos | `"nombre:/ruta"` — volumen con nombre que persiste al bajar/levantar |
 
 Ejemplo de un caso multi-contenedor (`05`):
 

@@ -7,6 +7,28 @@ el proyecto adopta [versionado semántico](https://semver.org/lang/es/).
 
 ---
 
+## [0.4.0] - 2026-07-06
+
+**Límites de recursos y persistencia de datos** — aprovechando la CLI de `wslc`.
+
+### Added
+
+- 🚦 **Límites de recursos por caso.** Al levantar, el panel aplica
+  `wslc run -m <RAM>M --cpus <n>` — RAM tope del valor recomendado medido y CPU por
+  categoría (starter 0.5 · platform 1 · infra 2). Nuevo campo `limits` en el catálogo;
+  el panel lo muestra como `🚦 tope …` en cada tarjeta. **Verificado**: postgres
+  corriendo con tope `1.00 GiB` aplicado (`wslc stats`).
+- 💽 **Volúmenes persistentes** para las bases de datos (PostgreSQL, MariaDB, MongoDB,
+  Elasticsearch, RabbitMQ, Jenkins). El panel crea un `wslc volume` con nombre y lo
+  monta (`-v nombre:/ruta`); al **Bajar** se conservan los datos. Marca `💽 persistente`
+  en la tarjeta. **Verificado**: un dato escrito en postgres **sobrevive** a un ciclo
+  bajar → levantar.
+- 🧰 **Referencia completa de la CLI de `wslc`**
+  ([docs/wslc-cli-referencia.md](docs/wslc-cli-referencia.md)): todos los comandos,
+  subcomandos y opciones (container/image/network/volume/registry/system session).
+
+---
+
 ## [0.3.1] - 2026-07-06
 
 ### Added
