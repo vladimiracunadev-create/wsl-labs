@@ -114,11 +114,16 @@ function isAuthenticated(req) {
 }
 
 // ── Ejecucion de comandos dentro de WSL ─────────────────────────────────────
-// Ejecuta `comando` en WSL exportando WSL_LABS_ROOT para que los startCommand
-// que usan "$WSL_LABS_ROOT/examples/..." resuelvan la ruta correcta.
+// Ejecuta `comando` en WSL resolviendo la ruta del repo.
+// IMPORTANTE: a traves de `wsl.exe -- bash -lc`, las variables de shell
+// ASIGNADAS dentro del comando (incluido `export VAR=x; ... $VAR`) NO se
+// expanden de forma fiable. Por eso NO dependemos de `$WSL_LABS_ROOT` en
+// runtime: sustituimos el token por la ruta literal antes de enviar el comando.
 function runInWsl(distro, command, timeoutMs = EXEC_TIMEOUT_MS) {
-  // Prefijo: exporta la raiz del repo en formato WSL antes de correr el comando.
-  const wrapped = `export WSL_LABS_ROOT=${shellQuote(WSL_LABS_ROOT)}; ${command}`;
+  // Sustitucion literal de $WSL_LABS_ROOT -> /mnt/c/... (sin variables de shell).
+  const resolved = String(command).split('$WSL_LABS_ROOT').join(WSL_LABS_ROOT);
+  // Se mantiene el export por si algun proceso hijo lo consulta por entorno.
+  const wrapped = `export WSL_LABS_ROOT=${shellQuote(WSL_LABS_ROOT)}; ${resolved}`;
 
   return new Promise((resolve) => {
     let stdout = '';
@@ -183,8 +188,12 @@ function takeLastLines(value, maxLines = 80) {
 }
 
 // ── Health-checks ───────────────────────────────────────────────────────────
-// Comprobacion TCP simple: intenta abrir el puerto en localhost.
-function tcpCheck(port, timeoutMs = HEALTH_TIMEOUT_MS) {
+// Los servicios en WSL pueden bindear IPv4 (0.0.0.0) o IPv6 (::). `curl localhost`
+// prueba ambas familias; nuestros checks tambien, para no marcar "stopped" un
+// servicio que solo escucha por ::1.
+const HEALTH_HOSTS = ['127.0.0.1', '::1'];
+
+function tcpConnectOnce(host, port, timeoutMs) {
   return new Promise((resolve) => {
     const socket = new net.Socket();
     let settled = false;
@@ -198,23 +207,35 @@ function tcpCheck(port, timeoutMs = HEALTH_TIMEOUT_MS) {
     socket.once('connect', () => finish(true));
     socket.once('error', () => finish(false));
     socket.once('timeout', () => finish(false));
-    socket.connect(port, '127.0.0.1');
+    socket.connect(port, host);
   });
 }
 
-// Comprobacion HTTP: GET a http://localhost:<port> con timeout corto.
-function httpCheck(port, timeoutMs = HEALTH_TIMEOUT_MS) {
+// Comprobacion TCP: abre el puerto probando IPv4 e IPv6.
+async function tcpCheck(port, timeoutMs = HEALTH_TIMEOUT_MS) {
+  for (const host of HEALTH_HOSTS) {
+    if (await tcpConnectOnce(host, port, timeoutMs)) return true;
+  }
+  return false;
+}
+
+function httpGetOnce(host, port, timeoutMs) {
   return new Promise((resolve) => {
-    const req = http.get(
-      { host: '127.0.0.1', port, path: '/', timeout: timeoutMs },
-      (res) => {
-        res.resume(); // descartar cuerpo
-        resolve(res.statusCode < 500);
-      }
-    );
+    const req = http.get({ host, port, path: '/', timeout: timeoutMs }, (res) => {
+      res.resume(); // descartar cuerpo
+      resolve(res.statusCode < 500);
+    });
     req.on('timeout', () => { req.destroy(); resolve(false); });
     req.on('error', () => resolve(false));
   });
+}
+
+// Comprobacion HTTP: GET probando IPv4 e IPv6.
+async function httpCheck(port, timeoutMs = HEALTH_TIMEOUT_MS) {
+  for (const host of HEALTH_HOSTS) {
+    if (await httpGetOnce(host, port, timeoutMs)) return true;
+  }
+  return false;
 }
 
 // Determina el estado de un lab de tipo service:
@@ -242,12 +263,26 @@ async function checkLabHealth(lab) {
   return { status: 'healthy', detail: 'Puerto abierto' };
 }
 
+// Cache de binarios instalados. La deteccion via wsl.exe puede fallar o expirar
+// puntualmente (arranque en frio de WSL, carga), y NO queremos que un servicio
+// ya instalado parpadee a "No instalado". Por eso: acumulamos positivos (una vez
+// visto instalado, se mantiene) y solo re-sondeamos cada CACHE_TTL.
+const INSTALLED_CACHE_TTL_MS = 30_000;
+const installedCache = new Set();
+let installedCacheAt = 0;
+
 // Detecta que binarios de servicio estan instalados en la distro, en UNA sola
 // llamada a wsl.exe (imprime el nombre de cada binario presente). Si wsl.exe no
-// existe (p.ej. CI en Linux) devuelve un Set vacio sin lanzar excepcion.
+// existe (p.ej. CI en Linux) devuelve el cache acumulado sin lanzar excepcion.
 async function detectInstalled(distro, requiresList) {
   const bins = [...new Set(requiresList.filter(Boolean))];
-  if (bins.length === 0) return new Set();
+  if (bins.length === 0) return new Set(installedCache);
+
+  const now = Date.now();
+  if (now - installedCacheAt < INSTALLED_CACHE_TTL_MS) {
+    return new Set(installedCache); // dentro del TTL: usa el cache
+  }
+
   // IMPORTANTE: no usamos variables de shell (for/$b). Al ejecutar via
   // `wsl.exe -- bash -lc`, las variables ASIGNADAS dentro del comando no se
   // expanden de forma fiable; por eso generamos un check literal por binario.
@@ -257,8 +292,16 @@ async function detectInstalled(distro, requiresList) {
   );
   const cmd = `${checks.join('; ')}; true`;
   const res = await runInWsl(distro, cmd, HEALTH_TIMEOUT_MS + 2_000);
-  if (!res.ok) return new Set();
-  return new Set(res.stdout.split(/\r?\n/).map((s) => s.trim()).filter(Boolean));
+  if (!res.ok) return new Set(installedCache); // fallo puntual: no invalida el cache
+
+  // Exito: acumulamos positivos en el cache (una vez instalado, se recuerda).
+  res.stdout
+    .split(/\r?\n/)
+    .map((s) => s.trim())
+    .filter(Boolean)
+    .forEach((b) => installedCache.add(b));
+  installedCacheAt = now;
+  return new Set(installedCache);
 }
 
 // ── Construccion del overview ───────────────────────────────────────────────
@@ -511,17 +554,46 @@ function createServer() {
 
 const PORT = Number(process.env.PORT || 9092);
 
+// ── Keepalive de la instancia WSL ───────────────────────────────────────────
+// WSL2 apaga la distro tras unos segundos de inactividad; eso tumbaria los
+// servicios levantados. Mientras el Control Center corre, mantenemos una sesion
+// abierta (`sleep infinity`) para que la instancia siga viva y los puertos
+// sigan accesibles desde localhost — igual que Docker Desktop mantiene su VM.
+let keepAliveChild = null;
+function startKeepAlive(distro) {
+  try {
+    keepAliveChild = spawn('wsl.exe', ['-d', distro, '--', 'sleep', 'infinity'], {
+      stdio: 'ignore',
+      windowsHide: true,
+    });
+    keepAliveChild.on('error', () => { keepAliveChild = null; });
+  } catch {
+    keepAliveChild = null;
+  }
+}
+function stopKeepAlive() {
+  if (keepAliveChild && !keepAliveChild.killed) {
+    try { keepAliveChild.kill(); } catch { /* noop */ }
+  }
+  keepAliveChild = null;
+}
+
 // Arranque solo si se ejecuta directamente (permite importar en verify-localhost).
 if (require.main === module) {
   const server = createServer();
   server.listen(PORT, HOST, () => {
+    const distro = resolveDistro(loadConfig());
+    startKeepAlive(distro);
     console.log('\n  WSL Control Center');
     console.log(`  http://localhost:${PORT}`);
     console.log(`  Repo (Windows): ${REPO_ROOT}`);
     console.log(`  Repo (WSL):     ${WSL_LABS_ROOT}`);
-    console.log(`  Distro:         ${resolveDistro(loadConfig())}`);
+    console.log(`  Distro:         ${distro} (keepalive activo)`);
     console.log(`  Auth token:     ${AUTH_TOKEN ? 'activado' : 'desactivado (modo dev)'}\n`);
   });
+  for (const sig of ['SIGINT', 'SIGTERM', 'exit']) {
+    process.on(sig, () => { stopKeepAlive(); if (sig !== 'exit') process.exit(0); });
+  }
 }
 
 module.exports = {

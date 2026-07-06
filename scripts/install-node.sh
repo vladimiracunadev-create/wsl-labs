@@ -23,10 +23,37 @@ else
   fi
 fi
 
-# --- 2) Verificación --------------------------------------------------------
+# --- 2) Servicio systemd ENABLED (sobrevive reinicios de la instancia WSL) ---
+# Node se ejecuta como servicio systemd habilitado, igual que nginx/apache, para
+# que sobreviva a los reinicios por inactividad de WSL2. La ruta del repo se
+# calcula desde la ubicación de este script.
+REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+NODE_BIN="$(command -v node || echo /usr/bin/node)"
+UNIT=/etc/systemd/system/wsl-labs-node.service
+echo "[wsl-labs] Instalando servicio systemd wsl-labs-node (WorkingDirectory=${REPO_ROOT}/examples/node-api)"
+sudo tee "$UNIT" >/dev/null <<EOF
+[Unit]
+Description=wsl-labs node-api (:${PUERTO})
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=${REPO_ROOT}/examples/node-api
+Environment=PORT=${PUERTO}
+ExecStart=${NODE_BIN} server.js
+Restart=on-failure
+RestartSec=2
+
+[Install]
+WantedBy=multi-user.target
+EOF
+sudo systemctl daemon-reload
+sudo systemctl enable wsl-labs-node >/dev/null 2>&1 || true
+
+# --- 3) Verificación --------------------------------------------------------
 if command -v node >/dev/null 2>&1; then
   echo "[wsl-labs] node $(node -v) · npm $(npm -v 2>/dev/null || echo 'n/a')"
-  echo "[wsl-labs] ${SERVICIO} OK en :${PUERTO} (la API se arranca con el startCommand del catálogo)"
+  echo "[wsl-labs] ${SERVICIO} OK en :${PUERTO} (servicio systemd wsl-labs-node habilitado)"
 else
   echo "[wsl-labs] ${SERVICIO} FALLO: 'node' no está disponible tras la instalación." >&2
   exit 1

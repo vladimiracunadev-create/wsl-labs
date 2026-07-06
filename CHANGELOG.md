@@ -7,6 +7,42 @@ el proyecto adopta [versionado semántico](https://semver.org/lang/es/).
 
 ---
 
+## [0.1.2] - 2026-07-06
+
+**Los 6 servicios quedan operativos de verdad**, verificados end-to-end.
+
+### Fixed
+
+- 🧩 **node** y **flask** no persistían: eran procesos en background que morían
+  al reiniciarse la instancia WSL. Ahora son **servicios systemd habilitados**
+  (`wsl-labs-node`, `wsl-labs-flask`), creados por sus `install-*.sh`, que
+  arrancan solos en cada boot igual que nginx/apache/postgres.
+- 🌐 El ejemplo `node-api` usaba **express** (sin `node_modules`) → reescrito con
+  el módulo `http` nativo: arranca sin `npm install`.
+- 🩺 Los health-checks del panel probaban solo IPv4; ahora prueban **IPv4 e IPv6**
+  (como `curl localhost`), evitando falsos "detenido" en apache/node.
+- 🔁 La detección de "instalado" parpadeaba a "No instalado" en sondas lentas;
+  ahora **cachea y acumula positivos** (un servicio instalado no vuelve a
+  aparecer como no instalado).
+- 🐛 Los `startCommand` con `$WSL_LABS_ROOT` fallaban (las variables no se
+  expanden vía `wsl.exe -- bash -lc`): el servidor **sustituye la ruta literal**.
+
+### Added
+
+- 🧱 **Lab 11 (mini-servidor)**: vhost nginx propio en `:8090`
+  (`labs/11-mini-servidor-completo/nginx-mini.conf`) — antes nada escuchaba ahí.
+- 💓 **Keepalive**: mientras el Control Center corre, mantiene viva la instancia
+  WSL (como Docker Desktop con su VM) para que los servicios sigan accesibles.
+
+### Verified
+
+- ✅ **Los 6 servicios** instalados y operados desde el panel (root, sin
+  contraseña) y respondiendo desde Windows: nginx `:8080`, apache `:8081`,
+  node `:8082`, flask `:8083`, mini `:8090` → **HTTP 200**; postgres `:5432`
+  aceptando conexiones. Dashboard: **6/6 saludables**.
+
+---
+
 ## [0.1.1] - 2026-07-06
 
 Operatividad real estilo **Docker**: el panel deja de pedir contraseña.

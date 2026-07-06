@@ -86,9 +86,9 @@
       "requires": "node",
       "installHint": "wsl bash scripts/install-node.sh",
       "installCommand": "bash \"$WSL_LABS_ROOT/scripts/install-node.sh\"",
-      "startCommand": "cd \"$WSL_LABS_ROOT/examples/node-api\" && PORT=8082 nohup node server.js > /tmp/wsl-labs-node.log 2>&1 &",
-      "stopCommand": "pkill -f 'node server.js' || true",
-      "logsCommand": "tail -n 50 /tmp/wsl-labs-node.log 2>/dev/null || true",
+      "startCommand": "systemctl enable --now wsl-labs-node 2>/dev/null; systemctl restart wsl-labs-node",
+      "stopCommand": "systemctl stop wsl-labs-node 2>/dev/null; true",
+      "logsCommand": "journalctl -u wsl-labs-node -n 50 --no-pager 2>/dev/null || true",
       "healthProtocol": "http"
     },
     {
@@ -103,9 +103,9 @@
       "requires": "python3",
       "installHint": "wsl bash scripts/install-python.sh",
       "installCommand": "bash \"$WSL_LABS_ROOT/scripts/install-python.sh\"",
-      "startCommand": "cd \"$WSL_LABS_ROOT/examples/python-flask\" && if [ -x ./.venv/bin/python ]; then PORT=8083 nohup ./.venv/bin/python app.py > /tmp/wsl-labs-flask.log 2>&1 & else PORT=8083 nohup python3 app.py > /tmp/wsl-labs-flask.log 2>&1 & fi",
-      "stopCommand": "pkill -f 'app.py' || true",
-      "logsCommand": "tail -n 50 /tmp/wsl-labs-flask.log 2>/dev/null || true",
+      "startCommand": "systemctl enable --now wsl-labs-flask 2>/dev/null; systemctl restart wsl-labs-flask",
+      "stopCommand": "systemctl stop wsl-labs-flask 2>/dev/null; true",
+      "logsCommand": "journalctl -u wsl-labs-flask -n 50 --no-pager 2>/dev/null || true",
       "healthProtocol": "http"
     },
     {
@@ -146,9 +146,9 @@
       "requires": "nginx",
       "installHint": "wsl bash scripts/install-nginx.sh && wsl bash scripts/install-postgresql.sh",
       "installCommand": "bash \"$WSL_LABS_ROOT/scripts/install-nginx.sh\" && bash \"$WSL_LABS_ROOT/scripts/install-postgresql.sh\"",
-      "startCommand": "sudo service nginx start && sudo service postgresql start",
-      "stopCommand": "sudo service nginx stop && sudo service postgresql stop",
-      "logsCommand": "sudo tail -n 30 /var/log/nginx/access.log 2>/dev/null || true",
+      "startCommand": "install -m644 \"$WSL_LABS_ROOT/labs/11-mini-servidor-completo/nginx-mini.conf\" /etc/nginx/sites-available/wsl-labs-mini && ln -sf /etc/nginx/sites-available/wsl-labs-mini /etc/nginx/sites-enabled/wsl-labs-mini && nginx -t && (service nginx reload || service nginx start) && service postgresql start",
+      "stopCommand": "rm -f /etc/nginx/sites-enabled/wsl-labs-mini; service nginx reload 2>/dev/null; true",
+      "logsCommand": "tail -n 30 /var/log/nginx/access.log 2>/dev/null || true",
       "healthProtocol": "http"
     },
     {

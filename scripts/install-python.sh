@@ -41,11 +41,32 @@ else
   "${VENV_DIR}/bin/pip" install flask
 fi
 
-# --- 3) Verificación --------------------------------------------------------
+# --- 3) Servicio systemd ENABLED (sobrevive reinicios de la instancia WSL) ---
+UNIT=/etc/systemd/system/wsl-labs-flask.service
+echo "[wsl-labs] Instalando servicio systemd wsl-labs-flask (WorkingDirectory=${FLASK_DIR})"
+sudo tee "$UNIT" >/dev/null <<EOF
+[Unit]
+Description=wsl-labs python-flask (:${PUERTO})
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=${FLASK_DIR}
+Environment=PORT=${PUERTO}
+ExecStart=${VENV_DIR}/bin/python app.py
+Restart=on-failure
+RestartSec=2
+
+[Install]
+WantedBy=multi-user.target
+EOF
+sudo systemctl daemon-reload
+sudo systemctl enable wsl-labs-flask >/dev/null 2>&1 || true
+
+# --- 4) Verificación --------------------------------------------------------
 if "${VENV_DIR}/bin/python" -c "import flask" 2>/dev/null; then
   echo "[wsl-labs] Flask disponible en el venv (${VENV_DIR})."
-  echo "[wsl-labs] Para correr la app: ${VENV_DIR}/bin/python ${FLASK_DIR}/app.py (PORT=${PUERTO})"
-  echo "[wsl-labs] ${SERVICIO} OK en :${PUERTO}"
+  echo "[wsl-labs] ${SERVICIO} OK en :${PUERTO} (servicio systemd wsl-labs-flask habilitado)"
 else
   echo "[wsl-labs] ${SERVICIO} FALLO: no se pudo importar flask en el venv." >&2
   exit 1

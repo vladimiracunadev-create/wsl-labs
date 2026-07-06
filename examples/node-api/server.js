@@ -1,16 +1,29 @@
-const express = require('express');
+'use strict';
 
-const app = express();
+// API de ejemplo de wsl-labs — módulo `http` nativo, SIN dependencias externas
+// (no requiere `npm install`), para que arranque al instante dentro de WSL.
+const http = require('http');
+
 const port = process.env.PORT || 3000;
 
-app.get('/', (req, res) => {
-  res.json({
-    project: 'wsl-labs',
-    service: 'node-api',
-    status: 'running'
-  });
+const server = http.createServer((req, res) => {
+  res.setHeader('Content-Type', 'application/json; charset=utf-8');
+  if (req.url === '/health') {
+    res.writeHead(200);
+    res.end(JSON.stringify({ status: 'ok' }));
+    return;
+  }
+  res.writeHead(200);
+  res.end(
+    JSON.stringify({
+      project: 'wsl-labs',
+      service: 'node-api',
+      status: 'running',
+      port: Number(port),
+    })
+  );
 });
 
-app.listen(port, () => {
-  console.log(`wsl-labs node-api running on http://localhost:${port}`);
+server.listen(port, () => {
+  console.log(`wsl-labs node-api escuchando en http://localhost:${port}`);
 });
