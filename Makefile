@@ -1,8 +1,12 @@
 SHELL := /bin/bash
 WSLC ?= /c/Program Files/WSL/wslc.exe
+IMG  ?=
+VOL  ?=
+FILE ?=
 
 .PHONY: help serve test-dashboard images ps prune \
-	build-node build-python build-go build-nginx build-redis build-postgres build-php build-multi
+	build-node build-python build-go build-nginx build-redis build-postgres build-php build-multi \
+	export-image import-image backup-volume restore-volume
 
 help:
 	@echo "wsl-labs — WSL Container Center (motor: wslc)"
@@ -12,6 +16,12 @@ help:
 	@echo "  make ps               # lista contenedores wslc"
 	@echo "  make prune            # elimina contenedores parados + imagenes colgadas"
 	@echo "  make build-<caso>     # construye la imagen de un caso (node/python/go/nginx/redis/postgres/php/multi)"
+	@echo ""
+	@echo "  Portabilidad (mover a otro equipo):"
+	@echo "  make export-image  IMG=wsl-labs/node-api:latest FILE=/c/tmp/node-api.tar"
+	@echo "  make import-image  FILE=/c/tmp/node-api.tar"
+	@echo "  make backup-volume VOL=wslc-pgdata FILE=/c/tmp/pgdata.tar.gz"
+	@echo "  make restore-volume VOL=wslc-pgdata FILE=/c/tmp/pgdata.tar.gz"
 	@echo ""
 	@echo "  Levanta y controla los contenedores desde el panel (http://localhost:9092):"
 	@echo "  cada caso tiene botones Construir / Levantar / Bajar / Logs."
@@ -48,3 +58,21 @@ build-php:
 	@"$(WSLC)" build -t wsl-labs/php-lamp:latest containers/02-php-lamp
 build-multi:
 	@"$(WSLC)" build -t wsl-labs/multi-backend:latest containers/09-multi-service
+
+# ── Portabilidad: mover imágenes y volúmenes a otro equipo ──────────────────
+export-image:
+	@"$(WSLC)" save $(IMG) -o "$(FILE)"
+	@echo "[wsl-labs] imagen $(IMG) -> $(FILE)"
+
+import-image:
+	@"$(WSLC)" load -i "$(FILE)"
+
+# Backup/restore por stdout/stdin (evita el límite de bind mounts de wslc preview).
+backup-volume:
+	@"$(WSLC)" run --rm -v $(VOL):/data alpine tar czf - -C /data . > "$(FILE)"
+	@echo "[wsl-labs] volumen $(VOL) -> $(FILE)"
+
+restore-volume:
+	@"$(WSLC)" volume create $(VOL)
+	@"$(WSLC)" run --rm -i -v $(VOL):/data alpine tar xzf - -C /data < "$(FILE)"
+	@echo "[wsl-labs] volumen $(VOL) restaurado desde $(FILE)"

@@ -7,6 +7,22 @@ el proyecto adopta [versionado semántico](https://semver.org/lang/es/).
 
 ---
 
+## [0.4.1] - 2026-07-06
+
+### Added
+
+- 🚚 **Guía de portabilidad** ([docs/portabilidad.md](docs/portabilidad.md)): cómo
+  mover **imágenes** (`wslc save`/`load`), **volúmenes** (backup/restore por
+  stdout/stdin) y la **distro** (`wsl --export`/`--import`) a otro equipo. Con el
+  *quirk* real de la preview (bind mounts) y su rodeo. Algo que **no está** en
+  docker-labs ni unikernel-labs (sus docs de "migración" son de nube/instalador).
+- 🧰 **Helpers**: `scripts/windows/wslc-portable.ps1` (export/import imagen,
+  backup/restore volumen — redirección binaria vía `cmd`) y targets equivalentes en
+  el `Makefile` (`export-image`, `import-image`, `backup-volume`, `restore-volume`).
+  **Verificado**: round-trip de imagen y de volumen a un volumen nuevo.
+
+---
+
 ## [0.4.0] - 2026-07-06
 
 **Límites de recursos y persistencia de datos** — aprovechando la CLI de `wslc`.

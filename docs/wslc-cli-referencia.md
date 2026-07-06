@@ -328,6 +328,7 @@ El [Control Center](DASHBOARD_SETUP.md) traduce cada botón a comandos `wslc`:
 
 ## 🔗 Ver también
 
+- [🚚 Portabilidad — mover imágenes y volúmenes a otro equipo](portabilidad.md)
 - [🐳 Guía de contenedores con WSLC](wslc-contenedores.md)
 - [📚 Catálogo de casos](LABS_CATALOG.md)
 - [🧾 Referencia de runtime por caso](LABS_RUNTIME_REFERENCE.md)
