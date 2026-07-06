@@ -26,7 +26,7 @@ Los tres comparten un mismo **ADN**:
 2. **Un Control Center web** (Node.js) que corre en localhost y actúa de puente
    Windows ↔ motor, con `index.html` + `dashboard.css` + `dashboard.js`.
 3. **Un Launcher de Windows** (Go en docker-labs, WinForms/.NET en unikernel-labs)
-   + **instalador** (Inno Setup) distribuido por GitHub Releases.
+   - **instalador** (Inno Setup) distribuido por GitHub Releases.
 4. **Un catálogo como fuente única de verdad** (`lab-manifest.json` por lab en
    docker-labs, `labs.config.json` central en unikernel-labs).
 5. **Labs numerados** `NN-nombre-kebab` con README homogéneo.
@@ -115,6 +115,7 @@ distingue `platform` de `starter`/`infra`.
 ## 3. Plan por fases
 
 ### Fase 1 — Identidad y gobernanza (rápida, alto impacto visual)
+
 - [ ] Reescribir `README.md`: título con emoji `🐧 wsl-labs`, fila de badges
       (CI · Docs · Release · Platform Windows+WSL2 · License), diagrama Mermaid,
       tabla de labs con estado/puerto, quickstart, tabla de servicios localhost,
@@ -126,6 +127,7 @@ distingue `platform` de `starter`/`infra`.
 - [ ] **Decisión de licencia** (§7).
 
 ### Fase 2 — Catálogo + normalización de labs
+
 - [ ] `labs.config.json` como fuente única (project, subtitle, array de 12 labs
       con `id, name, path, type, status, port, url, startCommand, stopCommand, logsCommand, healthProtocol`).
 - [ ] Normalizar los 12 `labs/NN-*/README.md` a la plantilla homogénea:
@@ -135,6 +137,7 @@ distingue `platform` de `starter`/`infra`.
       cada servicio escuchando en su puerto (usados por el dashboard).
 
 ### Fase 3 — Control Center web (Node.js)
+
 - [ ] `dashboard-server/server.js` (Express o http nativo) en `:9092`,
       endpoints: `GET /api/overview`, `POST /api/wsl/{start|stop|logs}`,
       `GET /api/health/:lab`; puente vía `wsl.exe`; rate-limit + token opcional
@@ -144,6 +147,7 @@ distingue `platform` de `starter`/`infra`.
 - [ ] `scripts/verify-localhost.js` + target `make test-dashboard`.
 
 ### Fase 4 — Launcher Windows + instalador
+
 - [ ] Launcher (recomendado **Go**, como docker-labs: sin dependencias, un `.exe`):
       detecta distro WSL, arranca servicios core, espera a `/api/overview`, abre
       el navegador en `:9092`.
@@ -151,12 +155,14 @@ distingue `platform` de `starter`/`infra`.
 - [ ] `scripts/windows/build-launcher.ps1`, `build-installer.ps1`, `release.ps1`.
 
 ### Fase 5 — CI/CD
+
 - [ ] `.github/workflows/docs.yml` — markdownlint sobre `**/*.md`.
 - [ ] `.github/workflows/scripts.yml` — `shellcheck` para `.sh` + `PSScriptAnalyzer` para `.ps1`.
 - [ ] `.github/workflows/dashboard.yml` — tests Node del Control Center.
 - [ ] `.github/workflows/build-windows.yml` — build launcher Go + Inno Setup, publica en Releases al taggear `v*.*.*`.
 
 ### Fase 6 — Suite documental y branding
+
 - [ ] Docs de paridad: `RECRUITER.md`, `ROADMAP.md`, `RUNBOOK.md`,
       `ENVIRONMENT_SETUP.md`, `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`,
       `CHANGELOG.md`, `SECURITY.md`, `COMPATIBILITY.md`, `FILE_ARCHITECTURE.md`,
