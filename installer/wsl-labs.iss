@@ -67,7 +67,6 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 Source: "..\launcher\windows\wsl-labs-launcher.exe"; DestDir: "{app}"; Flags: ignoreversion
 
 ; Config raiz y documentacion
-Source: "..\labs.config.json"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\README.md";        DestDir: "{app}"; Flags: ignoreversion
 Source: "..\LICENSE";          DestDir: "{app}"; Flags: ignoreversion
 
@@ -85,12 +84,7 @@ Source: "..\dashboard-server\*"; DestDir: "{app}\dashboard-server"; \
   Flags: ignoreversion recursesubdirs createallsubdirs; \
   Excludes: "node_modules\*"
 
-; Contenido de los labs (fuente + guias, sin node_modules)
-Source: "..\labs\*"; DestDir: "{app}\labs"; \
-  Flags: ignoreversion recursesubdirs createallsubdirs; \
-  Excludes: "node_modules\*,__pycache__\*,*.pyc"
-
-; Scripts de aprovisionamiento dentro de WSL2
+; Scripts de build/release (Windows)
 Source: "..\scripts\*"; DestDir: "{app}\scripts"; \
   Flags: ignoreversion recursesubdirs createallsubdirs
 
