@@ -71,6 +71,10 @@ Source: "..\labs.config.json"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\README.md";        DestDir: "{app}"; Flags: ignoreversion
 Source: "..\LICENSE";          DestDir: "{app}"; Flags: ignoreversion
 
+; Track de contenedores WSLC (Dockerfiles + catalogo para wslc build/run)
+Source: "..\wslc\*"; DestDir: "{app}\wslc"; \
+  Flags: ignoreversion recursesubdirs createallsubdirs
+
 ; Assets estaticos del dashboard (servidos por el Control Center en 9092)
 Source: "..\index.html";    DestDir: "{app}"; Flags: ignoreversion
 Source: "..\dashboard.css"; DestDir: "{app}"; Flags: ignoreversion

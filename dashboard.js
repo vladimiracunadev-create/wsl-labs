@@ -19,6 +19,7 @@ const els = {
   generatedAt: document.getElementById('generated-at'),
   subtitle: document.getElementById('hero-subtitle'),
   labGrid: document.getElementById('lab-grid'),
+  wslcGrid: document.getElementById('wslc-grid'),
   logsTitle: document.getElementById('logs-title'),
   logsOutput: document.getElementById('logs-output'),
   refresh: document.getElementById('refresh-all'),
@@ -51,9 +52,11 @@ function formatTimestamp(value) {
 function statusMeta(status) {
   const map = {
     healthy: { label: '✅ Saludable', cls: 'healthy' },
+    running: { label: '✅ Corriendo', cls: 'healthy' },
     degraded: { label: '⚠️ Degradado', cls: 'degraded' },
     stopped: { label: '⏹ Detenido', cls: 'stopped' },
     missing: { label: '⛔ No instalado', cls: 'missing' },
+    unavailable: { label: '🚫 WSLC no disponible', cls: 'missing' },
     'n/a': { label: '📘 Learning', cls: 'na' },
   };
   return map[status] || { label: esc(status), cls: 'na' };
@@ -171,6 +174,100 @@ async function loadOverview() {
   renderLabCards();
 }
 
+// ── Contenedores WSLC ───────────────────────────────────────────────────────
+function wslcStatusMeta(status) {
+  const map = {
+    running: { label: '✅ Corriendo', cls: 'healthy' },
+    degraded: { label: '⚠️ Degradado', cls: 'degraded' },
+    stopped: { label: '⏹ Detenido', cls: 'stopped' },
+    missing: { label: '⛔ Sin imagen', cls: 'missing' },
+    unavailable: { label: '🚫 No disponible', cls: 'missing' },
+  };
+  return map[status] || { label: esc(status), cls: 'na' };
+}
+
+function renderWslcCards(overview) {
+  if (!overview.available) {
+    els.wslcGrid.innerHTML =
+      `<div class="empty">🚫 <b>WSLC no está disponible.</b> ` +
+      `${esc(overview.hint || 'Actualiza WSL: wsl --update --pre-release')}</div>`;
+    return;
+  }
+  if (!overview.images || !overview.images.length) {
+    els.wslcGrid.innerHTML = `<div class="empty">Sin imágenes en el catálogo WSLC.</div>`;
+    return;
+  }
+
+  els.wslcGrid.innerHTML = overview.images
+    .map((img) => {
+      const id = esc(img.id);
+      const meta = wslcStatusMeta(img.status);
+      const tags = [`<span class="tag">🐳 contenedor</span>`];
+      if (img.port) tags.push(`<span class="tag">🔌 :${esc(img.port)}</span>`);
+      tags.push(`<span class="tag">🏷️ ${esc(img.image)}</span>`);
+
+      const actions = [];
+      if (img.status === 'missing') {
+        actions.push(`<button class="btn btn-primary" data-wslc-action="build" data-id="${id}" title="Construye la imagen (wslc build; puede tardar)">📦 Construir</button>`);
+      } else {
+        if (img.status !== 'running') {
+          actions.push(`<button class="btn btn-primary" data-wslc-action="run" data-id="${id}">▶ Ejecutar</button>`);
+        }
+        if (img.status === 'running') {
+          actions.push(`<button class="btn btn-danger" data-wslc-action="stop" data-id="${id}">⏹ Detener</button>`);
+          actions.push(`<button class="btn btn-ghost" data-wslc-action="logs" data-id="${id}">📄 Logs</button>`);
+        }
+        actions.push(`<button class="btn btn-ghost" data-wslc-action="build" data-id="${id}" title="Reconstruir la imagen">🔁 Rebuild</button>`);
+      }
+      if (img.url && img.status === 'running') {
+        actions.push(`<a class="btn btn-secondary" href="${safeUrl(img.url)}" target="_blank" rel="noreferrer">🌐 Abrir</a>`);
+      }
+
+      return `
+        <article class="lab-card ${meta.cls}">
+          <div class="lab-head">
+            <div>
+              <div class="lab-id">Imagen ${id}</div>
+              <h3 class="lab-title">${esc(img.name)}</h3>
+            </div>
+            <span class="status-badge ${meta.cls}">
+              <span class="status-dot"></span>
+              <span>${meta.label}</span>
+            </span>
+          </div>
+          <p class="lab-copy">${esc(img.description)}</p>
+          <div class="tag-row">${tags.join('')}</div>
+          <div class="card-actions">${actions.join('')}</div>
+        </article>
+      `;
+    })
+    .join('');
+}
+
+async function loadWslcOverview() {
+  try {
+    const overview = await fetchJson('/api/wslc/overview');
+    renderWslcCards(overview);
+  } catch (error) {
+    els.wslcGrid.innerHTML = `<div class="empty">No se pudo cargar WSLC: ${esc(error.message)}</div>`;
+  }
+}
+
+async function runWslcAction(id, action) {
+  const verbo = { build: 'construyendo', run: 'ejecutando', stop: 'deteniendo', logs: 'logs' }[action] || action;
+  els.logsTitle.textContent = `Contenedor ${id} (${action})`;
+  els.logsOutput.textContent = `WSLC: ${verbo} "${id}"… (build/run pueden tardar)`;
+  const payload = await fetchJson(`/api/wslc/${action}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ id }),
+  });
+  els.logsOutput.textContent = payload.output || 'Acción completada sin salida adicional.';
+  if (action !== 'logs') {
+    await loadWslcOverview();
+  }
+}
+
 // ── Acciones sobre un lab ───────────────────────────────────────────────────
 async function runWslAction(id, action) {
   els.logsTitle.textContent = `Salida operativa: lab ${id} (${action})`;
@@ -188,6 +285,24 @@ async function runWslAction(id, action) {
 
 // ── Delegacion de clicks en las tarjetas ────────────────────────────────────
 document.addEventListener('click', async (event) => {
+  // Acciones de contenedores WSLC.
+  const wslcTarget = event.target.closest('[data-wslc-action]');
+  if (wslcTarget) {
+    const id = wslcTarget.getAttribute('data-id');
+    const action = wslcTarget.getAttribute('data-wslc-action');
+    if (!id || !action) return;
+    try {
+      wslcTarget.disabled = true;
+      await runWslcAction(id, action);
+    } catch (error) {
+      els.logsOutput.textContent = error.message;
+    } finally {
+      wslcTarget.disabled = false;
+    }
+    return;
+  }
+
+  // Acciones de servicios (labs).
   const target = event.target.closest('[data-action]');
   if (!target) return;
   const id = target.getAttribute('data-id');
@@ -207,7 +322,7 @@ document.addEventListener('click', async (event) => {
 // ── Acciones globales ───────────────────────────────────────────────────────
 els.refresh.addEventListener('click', async () => {
   try {
-    await loadOverview();
+    await Promise.all([loadOverview(), loadWslcOverview()]);
   } catch (error) {
     els.logsOutput.textContent = error.message;
   }
@@ -248,3 +363,4 @@ els.stopAll.addEventListener('click', async () => {
 loadOverview().catch((error) => {
   els.logsOutput.textContent = error.message;
 });
+loadWslcOverview();

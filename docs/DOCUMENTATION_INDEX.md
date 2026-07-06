@@ -52,6 +52,7 @@ apuntan a la raíz del repo; las demás viven en `docs/`.
 | Documento | Qué resuelve | Abrir |
 | --- | --- | --- |
 | Historia y referencia de WSL | Por qué Microsoft creó WSL, WSL1 vs WSL2 y referencia completa de comandos | [Abrir](wsl-historia-y-referencia.md) |
+| Contenedores WSLC | Imágenes y contenedores reales con `wslc` (motor nativo de WSL, tipo Docker) | [Abrir](wslc-contenedores.md) |
 | ¿Qué es WSL? | Conceptos base de WSL/WSL2 | [Abrir](00-que-es-wsl.md) |
 | Instalación de WSL | Instalar y configurar WSL 2 | [Abrir](01-instalacion-wsl.md) |
 | Comandos básicos | Comandos de `wsl.exe` y del shell Linux | [Abrir](02-comandos-basicos.md) |

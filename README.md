@@ -97,6 +97,32 @@ privilegiado en WSL, sin contraseñas): **📦 Instalar → ▶ Levantar**.
 | 🐍 Flask | 08 | 8083 | <http://localhost:8083> |
 | 🗄️ PostgreSQL | 09 | 5432 | `postgres://localhost:5432` |
 
+> [!NOTE]
+> **Dos enfoques complementarios.** Arriba, **servicios** = demonios Linux dentro
+> de la distro (nginx/apache/…). Además, el repo tiene un track de **contenedores
+> reales** con **WSLC** (`wslc`, el motor de contenedores nativo de WSL): imágenes
+> construidas desde Dockerfiles, en `localhost:8091-8093`. Ver
+> [🐳 Contenedores (WSLC)](docs/wslc-contenedores.md).
+
+---
+
+## 🐳 Contenedores (WSLC) — imágenes reales
+
+Desde **WSL 2.9+**, WSL trae **WSLC**, un motor de contenedores nativo (tipo
+Docker) con `wslc`. Este repo incluye **imágenes reales** construidas desde
+Dockerfiles, operables desde el mismo panel (📦 Construir → ▶ Ejecutar):
+
+| Imagen | Base | Puerto | URL |
+| ------ | ---- | :----: | --- |
+| `wsl-labs/web-nginx` | `nginx:alpine` | 8091 | <http://localhost:8091> |
+| `wsl-labs/node-api` | `node:20-alpine` | 8092 | <http://localhost:8092> |
+| `wsl-labs/python-flask` | `python:3.12-alpine` | 8093 | <http://localhost:8093> |
+
+> [!TIP]
+> `wslc` es preview: si no lo tienes, actualiza WSL con `wsl --update --pre-release`.
+> Guía completa: [docs/wslc-contenedores.md](docs/wslc-contenedores.md) · Lab:
+> [labs/13-wslc-contenedores](labs/13-wslc-contenedores/).
+
 ---
 
 ## 🧪 Labs disponibles
@@ -115,6 +141,7 @@ privilegiado en WSL, sin contraseñas): **📦 Instalar → ▶ Levantar**.
 | 10 | [Backup export/import](labs/10-backup-export-import/) | 📚 learning | ✅ | — |
 | 11 | [Mini-servidor completo](labs/11-mini-servidor-completo/) | ⚙️ service | ✅ | 8090 |
 | 12 | [Troubleshooting](labs/12-troubleshooting/) | 📚 learning | ✅ | — |
+| 13 | [Contenedores WSLC](labs/13-wslc-contenedores/) | 🐳 container | ✅ | 8091-8093 |
 
 ---
 
@@ -157,6 +184,7 @@ privilegiado en WSL, sin contraseñas): **📦 Instalar → ▶ Levantar**.
 | Documento | Para quién |
 |-----------|-----------|
 | [docs/wsl-historia-y-referencia.md](docs/wsl-historia-y-referencia.md) | **Historia de WSL, por qué existe y referencia completa de comandos** |
+| [docs/wslc-contenedores.md](docs/wslc-contenedores.md) | **Contenedores WSLC: imágenes reales con `wslc` (tipo Docker)** |
 | [docs/00-que-es-wsl.md](docs/00-que-es-wsl.md) | ¿Qué es WSL? |
 | [docs/01-instalacion-wsl.md](docs/01-instalacion-wsl.md) | Instalar y configurar WSL 2 |
 | [docs/02-comandos-basicos.md](docs/02-comandos-basicos.md) | Comandos básicos |

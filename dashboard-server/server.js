@@ -469,11 +469,194 @@ async function handleWslAction(action, body) {
   };
 }
 
+// ── Contenedores WSLC (motor de contenedores nativo de WSL) ─────────────────
+// A diferencia de los servicios (demonios en la distro via `wsl -u root`), aqui
+// gestionamos IMAGENES y CONTENEDORES reales con `wslc.exe`, que corre en Windows.
+const WSLC_CONFIG_PATH = path.join(REPO_ROOT, 'wslc', 'wslc.config.json');
+let wslcPathCache; // undefined = sin resolver
+
+// Localiza wslc.exe: env WSL_LABS_WSLC, ruta estandar de WSL, o el PATH.
+function resolveWslcPath() {
+  if (wslcPathCache !== undefined) return wslcPathCache;
+  const candidates = [process.env.WSL_LABS_WSLC, 'C:\\Program Files\\WSL\\wslc.exe'].filter(Boolean);
+  for (const c of candidates) {
+    try { if (fs.existsSync(c)) { wslcPathCache = c; return c; } } catch { /* noop */ }
+  }
+  wslcPathCache = 'wslc.exe'; // ultimo recurso: confiar en el PATH
+  return wslcPathCache;
+}
+
+// Ejecuta wslc.exe en Windows con argumentos (array). Mismo contrato que runInWsl.
+function runWslc(args, timeoutMs = EXEC_TIMEOUT_MS) {
+  return new Promise((resolve) => {
+    let stdout = '';
+    let stderr = '';
+    let settled = false;
+    let spawnError = null;
+    const finalize = (payload) => {
+      if (settled) return;
+      settled = true;
+      if (timer) clearTimeout(timer);
+      resolve(payload);
+    };
+    let child;
+    try {
+      child = spawn(resolveWslcPath(), args, { stdio: ['ignore', 'pipe', 'pipe'], windowsHide: true });
+    } catch (error) {
+      finalize({ ok: false, exitCode: 1, output: error.message, stdout: '', stderr: '' });
+      return;
+    }
+    child.stdout.setEncoding('utf8');
+    child.stderr.setEncoding('utf8');
+    child.stdout.on('data', (c) => { stdout += c; });
+    child.stderr.on('data', (c) => { stderr += c; });
+    child.on('error', (error) => { spawnError = error; });
+    child.on('close', (code) => {
+      const output = String(stdout + stderr).trim();
+      finalize({
+        ok: !spawnError && code === 0,
+        exitCode: Number.isInteger(code) ? code : 1,
+        stdout: stdout.trim(),
+        stderr: stderr.trim(),
+        output: output || (spawnError ? spawnError.message : ''),
+      });
+    });
+    const timer = setTimeout(() => {
+      if (child && !child.killed) child.kill();
+      finalize({ ok: false, exitCode: 124, output: `wslc cancelado por timeout (${timeoutMs}ms).`, stdout: '', stderr: '' });
+    }, timeoutMs);
+  });
+}
+
+function loadWslcConfig() {
+  const raw = fs.readFileSync(WSLC_CONFIG_PATH, 'utf8');
+  const config = JSON.parse(raw);
+  if (!Array.isArray(config.images)) throw new Error('wslc.config.json no contiene "images".');
+  return config;
+}
+
+// Overview del track de contenedores: motor disponible + estado por imagen.
+async function buildWslcOverview() {
+  let config;
+  try { config = loadWslcConfig(); } catch (e) {
+    return { available: false, engine: 'wslc', reason: e.message, images: [], totals: { total: 0 } };
+  }
+  const ver = await runWslc(['version'], 5_000);
+  const available = ver.ok;
+
+  const imagesText = available ? (await runWslc(['images'], 8_000)).stdout || '' : '';
+  const listText = available ? (await runWslc(['list'], 8_000)).stdout || '' : '';
+
+  const images = await Promise.all(
+    config.images.map(async (img) => {
+      const repo = String(img.image).split(':')[0];
+      const built = available && imagesText.includes(repo);
+      const running = available && new RegExp(`\\b${img.containerName}\\b`).test(listText);
+      let status = 'unavailable';
+      let statusDetail = 'WSLC no disponible';
+      if (available) {
+        if (running) {
+          const ok = img.healthProtocol === 'http' ? await httpCheck(img.port) : await tcpCheck(img.port);
+          status = ok ? 'running' : 'degraded';
+          statusDetail = ok ? 'Contenedor arriba' : 'Contenedor arriba, sin responder';
+        } else if (built) {
+          status = 'stopped';
+          statusDetail = 'Imagen construida, sin contenedor';
+        } else {
+          status = 'missing';
+          statusDetail = 'Imagen no construida';
+        }
+      }
+      return {
+        id: img.id,
+        name: img.name,
+        description: img.description || '',
+        image: img.image,
+        port: img.port || null,
+        url: img.url || null,
+        containerName: img.containerName,
+        built,
+        running,
+        status,
+        statusDetail,
+      };
+    })
+  );
+
+  return {
+    available,
+    engine: 'wslc',
+    project: config.project || 'Contenedores (WSLC)',
+    subtitle: config.subtitle || '',
+    wslcPath: resolveWslcPath(),
+    hint: available ? null : 'wslc no encontrado. Actualiza WSL: wsl --update --pre-release',
+    generatedAt: new Date().toISOString(),
+    images,
+    totals: {
+      total: images.length,
+      running: images.filter((i) => i.status === 'running').length,
+      stopped: images.filter((i) => i.status === 'stopped').length,
+      missing: images.filter((i) => i.status === 'missing').length,
+    },
+  };
+}
+
+// Acciones sobre una imagen/contenedor: build | run | stop | logs.
+async function handleWslcAction(action, body) {
+  const config = loadWslcConfig();
+  const id = body && typeof body.id === 'string' ? body.id : null;
+  if (!id || !/^[\w-]+$/.test(id)) {
+    return { statusCode: 400, payload: { ok: false, error: 'Parametro "id" invalido o ausente.' } };
+  }
+  const img = config.images.find((i) => i.id === id);
+  if (!img) return { statusCode: 404, payload: { ok: false, error: 'Imagen no encontrada.' } };
+
+  let args;
+  let timeout = EXEC_TIMEOUT_MS;
+  if (action === 'build') {
+    const context = path.join(REPO_ROOT, img.context);
+    args = ['build', '-t', img.image, context];
+    timeout = INSTALL_TIMEOUT_MS; // el build puede tardar (pull de la base, capas)
+  } else if (action === 'run') {
+    // Idempotente: elimina un contenedor previo con el mismo nombre y arranca.
+    await runWslc(['stop', img.containerName], 15_000);
+    await runWslc(['rm', img.containerName], 15_000);
+    args = ['run', '-d', '--name', img.containerName, '-p', `${img.port}:${img.containerPort}`, img.image];
+  } else if (action === 'stop') {
+    await runWslc(['stop', img.containerName], 20_000);
+    args = ['rm', img.containerName];
+  } else if (action === 'logs') {
+    args = ['logs', img.containerName];
+    timeout = LOGS_TIMEOUT_MS;
+  } else {
+    return { statusCode: 400, payload: { ok: false, error: `Accion "${action}" no soportada.` } };
+  }
+
+  const result = await runWslc(args, timeout);
+  const output = action === 'logs' ? takeLastLines(result.output || '(sin output)') : (result.output || '(sin output)');
+  return { statusCode: result.ok ? 200 : 500, payload: { ok: result.ok, id, action, exitCode: result.exitCode, output } };
+}
+
 // ── Router de API ───────────────────────────────────────────────────────────
 async function handleApi(req, res, pathname) {
   // GET /api/overview
   if (pathname === '/api/overview' && req.method === 'GET') {
     sendJson(res, 200, await buildOverview());
+    return;
+  }
+
+  // GET /api/wslc/overview
+  if (pathname === '/api/wslc/overview' && req.method === 'GET') {
+    sendJson(res, 200, await buildWslcOverview());
+    return;
+  }
+
+  // POST /api/wslc/build | run | stop | logs
+  const wslcMatch = pathname.match(/^\/api\/wslc\/(build|run|stop|logs)$/);
+  if (wslcMatch && req.method === 'POST') {
+    const body = await readBody(req);
+    const { statusCode, payload } = await handleWslcAction(wslcMatch[1], body);
+    sendJson(res, statusCode, payload);
     return;
   }
 

@@ -7,6 +7,39 @@ el proyecto adopta [versionado semántico](https://semver.org/lang/es/).
 
 ---
 
+## [0.2.0] - 2026-07-06
+
+**Track de contenedores WSLC — imágenes reales, no solo servicios.**
+
+Tras la llegada de **WSL Containers (WSLC)** —el motor de contenedores nativo de
+WSL— el repo deja de cubrir solo *servicios en la distro* y añade **imágenes y
+contenedores reales** (tipo Docker), conservando el track de servicios existente.
+
+### Added
+
+- 🐳 **Track WSLC** en `wslc/` con **3 imágenes reales** construidas desde
+  Dockerfiles y verificadas (HTTP 200 desde Windows): `wsl-labs/web-nginx` (:8091),
+  `wsl-labs/node-api` (:8092), `wsl-labs/python-flask` (:8093). Catálogo en
+  `wslc/wslc.config.json`.
+- 🧭 **Sección "Contenedores (WSLC)" en el Control Center** con botones
+  **📦 Construir / ▶ Ejecutar / ⏹ Detener / 📄 Logs**. Nuevos endpoints:
+  `GET /api/wslc/overview`, `POST /api/wslc/{build,run,stop,logs}`. El panel
+  localiza `wslc.exe` (`C:\Program Files\WSL\wslc.exe`) y detecta si no está.
+- 🧪 **Lab 13 · Contenedores WSLC** y guía [docs/wslc-contenedores.md](docs/wslc-contenedores.md).
+- 📜 Historia de WSL ampliada con **WSL open source (Build 2025)** y **WSLC**.
+
+### Verified
+
+- ✅ `wslc build` (imagen real desde Dockerfile) → `wslc run` → contenedor →
+  `curl localhost:8091/8092/8093` = **HTTP 200**. Ciclo Construir/Ejecutar/Detener
+  operado desde el panel.
+
+> [!NOTE]
+> WSLC requiere **WSL 2.9+** (preview): `wsl --update --pre-release`. El track de
+> servicios (nginx/apache/postgres como demonios) sigue disponible sin cambios.
+
+---
+
 ## [0.1.2] - 2026-07-06
 
 **Los 6 servicios quedan operativos de verdad**, verificados end-to-end.

@@ -1,9 +1,12 @@
 SHELL := /bin/bash
 
+WSLC ?= /c/Program Files/WSL/wslc.exe
+
 .PHONY: help serve test-dashboard doctor \
 	up-nginx up-apache up-node up-python up-postgres up-mini \
 	down-nginx down-apache down-node down-python down-postgres down-mini \
-	status logs-nginx logs-apache logs-node logs-python logs-postgres
+	status logs-nginx logs-apache logs-node logs-python logs-postgres \
+	wslc-build wslc-up wslc-down wslc-ps
 
 help:
 	@echo "wsl-labs — targets disponibles:"
@@ -18,6 +21,11 @@ help:
 	@echo "  make up-mini           # mini-servidor 8090| make down-mini"
 	@echo "  make status            # estado de servicios en WSL"
 	@echo "  make logs-*            # ultimas lineas de log de un servicio"
+	@echo "  -- Contenedores WSLC --"
+	@echo "  make wslc-build        # construye las 3 imagenes (wslc build)"
+	@echo "  make wslc-up           # ejecuta los 3 contenedores (8091-8093)"
+	@echo "  make wslc-down         # detiene y elimina los contenedores"
+	@echo "  make wslc-ps           # lista imagenes y contenedores wslc"
 
 serve:
 	@node dashboard-server/server.js
@@ -27,6 +35,25 @@ test-dashboard:
 
 doctor:
 	@bash scripts/doctor.sh
+
+# ── Contenedores WSLC (imagenes reales con wslc) ────────────────────────────
+wslc-build:
+	@"$(WSLC)" build -t wsl-labs/web-nginx:latest wslc/web-nginx
+	@"$(WSLC)" build -t wsl-labs/node-api:latest wslc/node-api
+	@"$(WSLC)" build -t wsl-labs/python-flask:latest wslc/python-flask
+
+wslc-up:
+	@"$(WSLC)" run -d --name wsl-labs-nginx -p 8091:80   wsl-labs/web-nginx:latest
+	@"$(WSLC)" run -d --name wsl-labs-node  -p 8092:8082 wsl-labs/node-api:latest
+	@"$(WSLC)" run -d --name wsl-labs-flask -p 8093:8083 wsl-labs/python-flask:latest
+
+wslc-down:
+	@-"$(WSLC)" stop wsl-labs-nginx wsl-labs-node wsl-labs-flask
+	@-"$(WSLC)" rm   wsl-labs-nginx wsl-labs-node wsl-labs-flask
+
+wslc-ps:
+	@"$(WSLC)" images
+	@"$(WSLC)" list
 
 up-nginx:
 	@sudo service nginx start
