@@ -101,7 +101,7 @@ Empieza por el **[📗 índice maestro](docs/DOCUMENTATION_INDEX.md)**.
 
 | Área | Documentos |
 |------|-----------|
-| 🚀 Uso | [INSTALL](docs/INSTALL.md) · [USER_MANUAL](docs/USER_MANUAL.md) · [DASHBOARD_SETUP](docs/DASHBOARD_SETUP.md) · [RUNBOOK](RUNBOOK.md) · [TROUBLESHOOTING](docs/TROUBLESHOOTING.md) |
+| 🚀 Uso | [INSTALL](docs/INSTALL.md) · [REQUIREMENTS](docs/REQUIREMENTS.md) · [USER_MANUAL](docs/USER_MANUAL.md) · [DASHBOARD_SETUP](docs/DASHBOARD_SETUP.md) · [RUNBOOK](RUNBOOK.md) · [TROUBLESHOOTING](docs/TROUBLESHOOTING.md) |
 | 🏗️ Técnico | [ARCHITECTURE](docs/ARCHITECTURE.md) · [TECHNICAL_SPECS](docs/TECHNICAL_SPECS.md) · [Catálogo de casos](docs/LABS_CATALOG.md) · [Runtime reference](docs/LABS_RUNTIME_REFERENCE.md) · [TOOLING](docs/TOOLING.md) |
 | 🐳 Contenedores | [Guía wslc](docs/wslc-contenedores.md) · [Mapping docker-labs → wslc](docs/mapping-from-docker-labs.md) |
 | 🐧 WSL (contexto) | [Historia y comandos de WSL](docs/wsl-historia-y-referencia.md) · [¿Qué es WSL?](docs/00-que-es-wsl.md) · [Cheatsheets](cheatsheets/) |
@@ -119,7 +119,31 @@ Empieza por el **[📗 índice maestro](docs/DOCUMENTATION_INDEX.md)**.
 
 - Windows 10 (2004+) o Windows 11 · **WSL 2.9+** con `wslc` (`wsl --update --pre-release`)
 - Node.js 18+ (panel) · Go 1.21+ (solo para compilar el launcher)
-- RAM holgada para los casos pesados (Elasticsearch, Jenkins)
+
+**Sistema** (medido): 💾 ~7 GB de imágenes (capas compartidas reducen el disco real) ·
+🧠 RAM **4 GB** mín / **8 GB** recom / **16 GB** cómodo · 🔧 **2–4** cores.
+
+### 📐 Tamaño y RAM por caso (medido con `wslc images` / `wslc stats`)
+
+| # | Caso | 💾 Imagen | 🧠 RAM reposo | 🧠 mín. | 🧠 recom. |
+|---|------|---------:|-------------:|-------:|---------:|
+| 10 | go-api | 15 MB | 2 MB | 64 MB | 128 MB |
+| 06 | nginx-web | 62 MB | 8 MB | 64 MB | 128 MB |
+| 03 | python-api | 62 MB | 21 MB | 128 MB | 256 MB |
+| 01 | node-api | 136 MB | 9 MB | 128 MB | 256 MB |
+| 04 | redis-cache | 175 MB | 13 MB | 256 MB | 512 MB |
+| 07 | rabbitmq | 252 MB | 148 MB | 512 MB | 1 GB |
+| 05 | postgres-api | 493 MB | 36 MB | 512 MB | 1 GB |
+| 02 | php-lamp | 808 MB | 76 MB | 512 MB | 1 GB |
+| 09 | multi-service | 1012 MB | 83 MB | 512 MB | 1 GB |
+| 08 | prometheus-grafana | 1406 MB | 177 MB | 768 MB | 1.5 GB |
+| 12 | jenkins | 490 MB | 702 MB | 1 GB | 2 GB |
+| 11 | elasticsearch | 1410 MB | 910 MB | 2 GB | 3 GB |
+
+> [!TIP]
+> Los `starter` son ligerísimos (<25 MB de RAM en reposo); los pesados son
+> **Elasticsearch** y **Jenkins**. El panel muestra estos mismos datos en cada
+> tarjeta. Detalle completo en **[docs/REQUIREMENTS.md](docs/REQUIREMENTS.md)**.
 
 ---
 
