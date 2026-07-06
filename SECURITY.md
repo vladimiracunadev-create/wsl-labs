@@ -71,7 +71,7 @@ o la cookie `wsl_labs_token=<token>`.
 ## 🛡️ Defensas incluidas
 
 | Defensa | Detalle |
-|---|---|
+| --- | --- |
 | 🏠 Solo loopback | El servidor enlaza a `127.0.0.1`, nunca a la red |
 | 🔑 Token opcional | `WSL_LABS_TOKEN` protege `/api/*` |
 | 🚦 Rate limiting | 30 req / 60 s por IP en acciones `POST` |

@@ -7,7 +7,7 @@
 ## 📋 Datos del lab
 
 | Campo | Valor |
-|---|---|
+| --- | --- |
 | Tipo | service |
 | Estado | ✅ ready |
 | Puerto | `8083` |

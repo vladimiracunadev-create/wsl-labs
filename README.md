@@ -29,7 +29,7 @@ levantar **servicios reales** (web, apps, bases de datos) accesibles desde
 `localhost` de Windows. Este repo lo convierte en un panel operable:
 
 | Pieza | Rol |
-|-------|-----|
+| ------- | ----- |
 | 🧭 **Control Center** (Node.js, `:9092`) | Arranca/detiene servicios WSL y muestra su salud |
 | 🪟 **Launcher Windows** (Go `.exe`) | Detecta la distro, levanta el stack y abre el navegador |
 | 🐧 **12 labs** (`labs/NN-*`) | Guías paso a paso: instalación, systemd, nginx, apache, node, python, postgres, backup… |
@@ -89,7 +89,7 @@ privilegiado en WSL, sin contraseñas): **📦 Instalar → ▶ Levantar**.
 ## 🌐 Servicios en localhost
 
 | Servicio | Lab | Puerto | URL |
-|----------|-----|:------:|-----|
+| ---------- | ----- | :------: | ----- |
 | 🧭 Control Center | — | 9092 | <http://localhost:9092> |
 | 🌐 NGINX | 05 | 8080 | <http://localhost:8080> |
 | 🐘 Apache + PHP | 06 | 8081 | <http://localhost:8081> |
@@ -102,7 +102,7 @@ privilegiado en WSL, sin contraseñas): **📦 Instalar → ▶ Levantar**.
 ## 🧪 Labs disponibles
 
 | # | Lab | Tipo | Estado | Puerto |
-|---|-----|------|:------:|:------:|
+| --- | ----- | ------ | :------: | :------: |
 | 01 | [Instalación Ubuntu](labs/01-instalacion-ubuntu/) | 📚 learning | ✅ | — |
 | 02 | [Comandos base WSL](labs/02-comandos-base-wsl/) | 📚 learning | ✅ | — |
 | 03 | [Sistema de archivos](labs/03-sistema-de-archivos/) | 📚 learning | ✅ | — |
@@ -121,7 +121,8 @@ privilegiado en WSL, sin contraseñas): **📦 Instalar → ▶ Levantar**.
 ## 📖 Documentación
 
 | Documento | Para quién |
-|-----------|-----------|
+| ----------- | ----------- |
+| [📗 docs/DOCUMENTATION_INDEX.md](docs/DOCUMENTATION_INDEX.md) | **Índice maestro** — empieza aquí si no sabes qué abrir |
 | [ENVIRONMENT_SETUP.md](ENVIRONMENT_SETUP.md) | Preparar Windows + WSL2 paso a paso |
 | [RUNBOOK.md](RUNBOOK.md) | Operación diaria del Control Center |
 | [docs/00-que-es-wsl.md](docs/00-que-es-wsl.md) | Fundamentos de WSL |

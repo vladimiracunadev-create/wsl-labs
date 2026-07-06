@@ -8,7 +8,7 @@
 ## ⚡ Qué mirar en 5 minutos
 
 | # | Paso | Qué verás |
-|---|---|---|
+| --- | --- | --- |
 | 1 | [README.md](README.md) | Historia principal, badges, diagrama de arquitectura |
 | 2 | [PROJECT_STATUS.md](PROJECT_STATUS.md) | Estado consolidado v0.1.0 en una matriz |
 | 3 | <http://localhost:9092> | El Control Center en vivo (si lo levantaste) |
@@ -24,7 +24,7 @@ de la línea de 3 repos y la capa de producto, sin revisar los 12 labs.
 ## 🧠 Qué demuestra este repo
 
 | Skill demostrada | Evidencia concreta |
-|---|---|
+| --- | --- |
 | 🪟 Integración Windows ↔ WSL2 | Control Center Node.js que ejecuta comandos en la distro vía `wsl.exe -d <distro> -- bash -lc` |
 | 🏗️ Diseño de sistema | Arquitectura de 3 capas: UX Windows · control Node.js · runtime Linux |
 | 🐧 Operación Linux | `service`/systemd, nginx, apache, postgres, flask, backup de distros |
@@ -43,7 +43,7 @@ montar sistemas, que comparten arquitectura (Control Center web + launcher
 Windows + servicios en localhost):
 
 | Repo | Motor | Qué muestra |
-|---|---|---|
+| --- | --- | --- |
 | [`docker-labs`](https://github.com/vladimiracunadev-create/docker-labs) | Docker / Compose | Reproducibilidad y operación de stacks |
 | [`unikernel-labs`](https://github.com/vladimiracunadev-create/unikernel-labs) | Unikraft sobre WSL2 | Especialización y benchmarking de una suite local |
 | **`wsl-labs`** | **WSL2 + servicios Linux nativos** | **Integración Windows ↔ Linux y operación de servicios reales** |

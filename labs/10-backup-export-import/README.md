@@ -7,7 +7,7 @@
 ## 📋 Datos del lab
 
 | Campo | Valor |
-|---|---|
+| --- | --- |
 | Tipo | learning |
 | Estado | ✅ ready |
 

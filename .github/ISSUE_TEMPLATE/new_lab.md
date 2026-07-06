@@ -21,7 +21,7 @@ Formato `NN-nombre-en-kebab-case` (ej. `13-ssh-server`).
 ## Servicio y puerto (si aplica)
 
 | Dato | Valor |
-|------|-------|
+| ------ | ------- |
 | Servicio | nginx / apache / … |
 | Puerto | 80xx |
 | Health | `curl …` |

@@ -131,7 +131,7 @@ Invoke-WebRequest http://localhost:8080 -UseBasicParsing
 Estados que devuelve el Control Center:
 
 | Estado | Emoji | Significado |
-|---|:---:|---|
+| --- | :---: | --- |
 | `healthy` | ✅ | Responde correctamente en su puerto |
 | `degraded` | ⚠️ | Puerto abierto pero HTTP da error |
 | `stopped` | ⏹ | Puerto cerrado / servicio abajo |
@@ -142,7 +142,7 @@ Estados que devuelve el Control Center:
 ## 📡 5 · Puertos y servicios
 
 | Servicio | Lab | Puerto | URL | Health |
-|---|:---:|---:|---|---|
+| --- | :---: | ---: | --- | --- |
 | 🧭 Control Center | — | 9092 | <http://localhost:9092> | — |
 | 🌐 nginx | 05 | 8080 | <http://localhost:8080> | `http` |
 | 🐘 apache + php | 06 | 8081 | <http://localhost:8081> | `http` |
@@ -219,7 +219,7 @@ make test-dashboard
 ## 🏗️ Criterio operativo
 
 | Capa | Responsabilidad |
-|---|---|
+| --- | --- |
 | 🪟 Windows | Capa de UX (Control Center, launcher) |
 | 🐧 WSL2 | Capa técnica (servicios Linux, systemd/service, sudo) |
 | 🌐 localhost | Superficie de servicios expuestos |

@@ -14,7 +14,7 @@ La línea está formada por tres laboratorios que enseñan a **montar y operar
 sistemas** con distintas tecnologías de base:
 
 | Repo | Motor de ejecución | Punto de acceso | Estado hoy |
-|------|--------------------|-----------------|-----------|
+| ------ | -------------------- | ----------------- | ----------- |
 | `docker-labs` | Docker / Compose | `http://localhost:9090` | v1.5.0 — maduro |
 | `unikernel-labs` | Unikraft sobre WSL2 | `http://localhost:9091` | v1 — validado |
 | **`wsl-labs`** | **WSL2 + servicios Linux nativos** | **`http://localhost:9092`** (objetivo) | **documental — sin plataforma** |
@@ -43,7 +43,7 @@ Los tres comparten un mismo **ADN**:
 ## 1. Matriz de brechas (gap analysis)
 
 | # | Componente | docker-labs | unikernel-labs | wsl-labs (hoy) | Acción |
-|---|-----------|:-----------:|:--------------:|:--------------:|--------|
+| --- | ----------- | :-----------: | :--------------: | :--------------: | -------- |
 | 1 | README con badges + Mermaid | ✅ | ✅ | ❌ (texto plano) | **Rehacer** |
 | 2 | Control Center web (Node) | ✅ 9090 | ✅ 9091 | ❌ | **Crear** 9092 |
 | 3 | `index.html`+`dashboard.css`+`.js` | ✅ | ✅ | ❌ | **Crear** |
@@ -97,7 +97,7 @@ flowchart LR
 **Mapa lab → servicio ejecutable** (fuente para `labs.config.json`):
 
 | Lab | Servicio | Puerto | Health |
-|-----|----------|:------:|--------|
+| ----- | ---------- | :------: | -------- |
 | 05-servidor-web-nginx | nginx | 8080 | `curl :8080` |
 | 06-servidor-apache-php | apache2+php | 8081 | `curl :8081` |
 | 07-nodejs-entorno-dev | node API | 8082 | `curl :8082/health` |

@@ -38,7 +38,7 @@ Usos comunes:
 ## Comparación rápida
 
 | Tecnología | Mejor uso |
-|---|---|
+| --- | --- |
 | WSL | Linux integrado a Windows |
 | Docker | Aplicaciones en contenedores |
 | VM | Sistema operativo completo aislado |

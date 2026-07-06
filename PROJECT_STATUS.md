@@ -21,7 +21,7 @@ arranca y monitorea servicios reales dentro de la distro vía `wsl.exe`, un
 ## 🚀 Matriz de componentes
 
 | Componente | Estado | Detalle |
-|---|:---:|---|
+| --- | :---: | --- |
 | 📄 README con identidad visual | ✅ | Badges, Mermaid, tablas de labs y servicios |
 | 🧭 Control Center (Node.js `:9092`) | ✅ | API `/api/overview`, `/api/health/:id`, `/api/wsl/*` |
 | 🖥️ UI web (`index.html` + css + js) | ✅ | Panel de control con estado por lab |
@@ -45,7 +45,7 @@ arranca y monitorea servicios reales dentro de la distro vía `wsl.exe`, un
 > devolviendo **HTTP 200** desde Windows.
 
 | Servicio | Lab | Puerto | Estado | Puesta en marcha |
-|---|:---:|---:|:---:|---|
+| --- | :---: | ---: | :---: | --- |
 | 🧭 Control Center | — | 9092 | 🟢 Operativo | Node.js en Windows |
 | 🌐 nginx | 05 | 8080 | 🟢 1-click (root) ✔ probado E2E | 📦 Instalar → ▶ Levantar |
 | 🐘 apache + php | 06 | 8081 | 🟢 1-click (root) | 📦 Instalar → ▶ Levantar |
@@ -89,7 +89,7 @@ passwordless sudo solo aplica al flujo por terminal (ver [RUNBOOK.md](RUNBOOK.md
 ## ⚠️ Riesgos o límites actuales
 
 | Riesgo | Impacto |
-|---|---|
+| --- | --- |
 | El panel ejecuta comandos como `root` en WSL | Modelo de confianza equivalente a Docker Desktop; mitigado por loopback + token (ver [SECURITY.md](SECURITY.md)) |
 | Servicio no instalado en la distro | Se resuelve con el botón 📦 **Instalar** del panel (o el `install-*.sh`) |
 | systemd no habilitado en la distro | Se usa `service` en lugar de `systemctl` |
@@ -101,7 +101,7 @@ passwordless sudo solo aplica al flujo por terminal (ver [RUNBOOK.md](RUNBOOK.md
 ## 📚 Recomendación de lectura
 
 | Si quieres… | Abre |
-|---|---|
+| --- | --- |
 | Entender la historia principal | [README.md](README.md) |
 | Evaluar el repo rápido | [RECRUITER.md](RECRUITER.md) |
 | Preparar el entorno | [ENVIRONMENT_SETUP.md](ENVIRONMENT_SETUP.md) |

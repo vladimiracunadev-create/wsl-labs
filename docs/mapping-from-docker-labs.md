@@ -10,7 +10,7 @@
 ## 🤝 Qué se conserva
 
 | Aspecto | Descripción |
-|---|---|
+| --- | --- |
 | 📁 Estructura por labs | Directorio numerado `NN-nombre-kebab` por servicio o tema |
 | 📖 Narrativa del repo | Aprendizaje progresivo, bien documentado |
 | 🏠 Operación local | Sin dependencias de cloud para el flujo principal |
@@ -24,7 +24,7 @@
 ## 🔄 Tabla de equivalencias conceptuales
 
 | Concepto en docker-labs | 🐧 Equivalente en wsl-labs | Nota |
-|---|---|---|
+| --- | --- | --- |
 | `docker compose up` | `sudo service <x> start` (vía `wsl.exe`) | El Control Center ejecuta el `startCommand` del catálogo |
 | **Contenedor** | **Demonio/proceso Linux en la distro** | nginx, apache, postgres corren nativos dentro de WSL2 |
 | **Imagen** | **Paquete apt** | `apt-get install nginx` en lugar de `pull` de una imagen |
@@ -45,7 +45,7 @@
 ## 🔁 Qué cambia en el motor
 
 | Aspecto | `docker-labs` | `wsl-labs` |
-|---|---|---|
+| --- | --- | --- |
 | Orquestación | `docker compose` | `wsl.exe -d <distro> -- bash -lc "<cmd>"` |
 | Runtime | Docker daemon | Servicios Linux nativos en WSL2 |
 | Empaquetado | Imágenes Docker | Paquetes `apt` |
@@ -58,7 +58,7 @@
 ## 🎯 Traducción de puertos
 
 | Servicio | docker-labs (típico) | wsl-labs |
-|---|---|---|
+| --- | --- | --- |
 | 🌐 Servidor web | contenedor nginx `:8080` | `sudo service nginx start` → `:8080` |
 | 🐘 Apache + PHP | contenedor LAMP | `sudo service apache2 start` → `:8081` |
 | 🟢 API Node | contenedor node | `node server.js` en la distro → `:8082` |

@@ -48,7 +48,7 @@
 ## 📐 Principios de evolución
 
 | Principio | Descripción |
-|---|---|
+| --- | --- |
 | 🎯 Honestidad técnica | No prometer runtime Windows nativo donde no corresponde |
 | 🪟 Windows es la UX | El modo de interacción principal sigue siendo Windows |
 | 🐧 Linux es el runtime | WSL2 + servicios Linux reales siempre en el backend |

@@ -9,7 +9,7 @@
 ## 🗂️ Tipos de contribución
 
 | Tipo | Descripción | Archivos clave |
-|---|---|---|
+| --- | --- | --- |
 | 🧪 Nuevo lab | Nuevo servicio o guía sobre WSL2 | `labs/NN-nombre/`, `labs.config.json` |
 | 🖥️ Fix del Control Center | Cambios en la API o UI web | `dashboard-server/`, `dashboard.js`, `index.html` |
 | 🚀 Fix del launcher | Cambios en la app Go | `launcher/windows/main.go` |
@@ -82,7 +82,7 @@ Para un **lab de aprendizaje** (sin servicio):
 ```
 
 | Campo | Uso |
-|---|---|
+| --- | --- |
 | `type` | `service` (tiene puerto) o `learning` (solo guía) |
 | `healthProtocol` | `http`, `tcp` o `null` |
 | `startCommand` | Comando que se ejecuta con `wsl.exe -d <distro> -- bash -lc "..."` |

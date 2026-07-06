@@ -69,7 +69,7 @@ wsl-labs/
 ## 🔑 Qué editar / qué no
 
 | Archivo | Rol | ¿Editar? |
-|---|---|:---:|
+| --- | --- | :---: |
 | `labs.config.json` | Fuente de verdad del catálogo (puertos, comandos, health) | ✅ **Editar aquí** |
 | `labs/NN-*/README.md` | Guía de cada lab | ✅ |
 | `dashboard-server/server.js` | Backend localhost que conecta Windows con WSL2 | ✅ |

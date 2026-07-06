@@ -27,7 +27,7 @@ Pega la salida relevante (`make status`, logs del Control Center, `wsl --status`
 ## Entorno
 
 | Dato | Valor |
-|------|-------|
+| ------ | ------- |
 | Windows | 10 / 11 (build) |
 | Versión WSL | `wsl --version` |
 | Distro | Ubuntu 22.04 / … |

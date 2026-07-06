@@ -20,7 +20,7 @@ La experiencia principal está diseñada para:
 ## 📊 Versiones soportadas
 
 | Componente | Mínimo soportado | Recomendado | Notas |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | 🪟 Windows | 10 versión **2004** (build 19041) | Windows 11 | WSL2 requiere 2004+ |
 | 🐧 WSL | **WSL 2** | WSL 2 | WSL 1 no soporta la topología de servicios |
 | 🐧 Distro | Ubuntu 20.04 / Debian 11 | Ubuntu 22.04+ | Otras distros: parcial |
@@ -33,7 +33,7 @@ La experiencia principal está diseñada para:
 ## 🧩 Matriz de plataformas
 
 | Plataforma | Control Center | Launcher | Servicios | Notas |
-|---|:---:|:---:|:---:|---|
+| --- | :---: | :---: | :---: | --- |
 | 🪟 Windows 11 + WSL2 | ✅ | ✅ | ✅ | **Ruta principal validada** |
 | 🪟 Windows 10 2004+ + WSL2 | 🟡 | 🟡 | 🟡 | Compatible, no validado explícitamente |
 | 🐧 Linux nativo | 🟡 | ❌ | ✅ | Útil para probar servicios directamente |
@@ -55,7 +55,7 @@ pide contraseña (igual que Docker corre privilegiado). Desde el panel basta:
 2. **▶ Levantar** — arranca el servicio, sin contraseña.
 
 | Servicio | Lab | Puerto | Desde el panel (root) | passwordless sudo |
-|---|:---:|---:|:---:|:---:|
+| --- | :---: | ---: | :---: | :---: |
 | 🌐 nginx | 05 | 8080 | ✅ 1-click | opcional (solo terminal) |
 | 🐘 apache + php | 06 | 8081 | ✅ 1-click | opcional (solo terminal) |
 | 🗄️ postgresql | 09 | 5432 | ✅ 1-click | opcional (solo terminal) |
@@ -99,7 +99,7 @@ Buena opción para trabajo prolongado desde WSL (I/O más rápida en `~`).
 > Estos riesgos pueden impedir el arranque de los servicios:
 
 | # | Riesgo | Impacto | Mitigación |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | 1 | **systemd no habilitado** en la distro | 🟠 Alto | Usar `sudo service <x> start` (ya es el default del catálogo) o habilitar systemd en `/etc/wsl.conf` con `[boot]\nsystemd=true` |
 | 2 | **`sudo` pide contraseña** para servicios | 🟠 Alto | Configurar `sudoers` sin password para los servicios usados (ver abajo) |
 | 3 | WSL en **versión 1** | 🔴 Crítico | Convertir con `wsl --set-version <distro> 2` |
