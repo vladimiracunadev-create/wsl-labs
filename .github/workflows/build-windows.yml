@@ -1,0 +1,159 @@
+name: Build Windows Installer
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Triggers:
+#   push tag v*.*.*  → build + adjunta installer al GitHub Release
+#   workflow_dispatch → build manual (artefacto descargable, sin release)
+# ─────────────────────────────────────────────────────────────────────────────
+on:
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version string (ejemplo: 0.1.0). Vacio = leer version.txt'
+        required: false
+        default: ''
+
+env:
+  GO_VERSION: '1.21'
+  # Fuerza Node.js 24 en las GitHub Actions para evitar errores de
+  # compatibilidad con los runners actuales (deprecacion de Node.js 20).
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
+
+jobs:
+  build-windows-installer:
+    name: Build Windows Installer
+    runs-on: windows-latest
+    permissions:
+      contents: write   # requerido para crear/adjuntar el GitHub Release
+
+    steps:
+      # ── Checkout ─────────────────────────────────────────────────────────
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      # ── Determinar version (tag → input → version.txt) ────────────────────
+      - name: Determine version
+        id: version
+        shell: pwsh
+        run: |
+          if ("${{ github.ref_type }}" -eq "tag") {
+            $v = "${{ github.ref_name }}" -replace '^v', ''
+          } elseif ("${{ github.event.inputs.version }}" -ne "") {
+            $v = "${{ github.event.inputs.version }}"
+          } else {
+            # version.txt como fuente unica de verdad
+            $vFile = "version.txt"
+            if (Test-Path $vFile) {
+              $v = (Get-Content $vFile -Raw).Trim()
+              Write-Host "Version leida de version.txt: $v"
+            } else {
+              $v = "0.1.0"
+              Write-Host "version.txt no encontrado, usando default: $v"
+            }
+          }
+          "VERSION=$v" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "version=$v" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+          Write-Host "Building version: $v"
+
+      # ── Configurar Go ─────────────────────────────────────────────────────
+      - name: Set up Go ${{ env.GO_VERSION }}
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          # cache: false porque el launcher solo usa stdlib (go.sum vacio).
+          # setup-go@v5 con go.sum vacio intenta operaciones git en runners
+          # Windows que terminan en exit code 128. Sin deps externas no hay
+          # nada que cachear de todas formas.
+          cache: false
+
+      # ── Build launcher (Go stdlib) ────────────────────────────────────────
+      - name: Build Go launcher
+        shell: pwsh
+        run: |
+          .\scripts\windows\build-launcher.ps1 -Version $env:VERSION
+
+      - name: Verify launcher binary
+        shell: pwsh
+        run: |
+          $exe = "launcher\windows\wsl-labs-launcher.exe"
+          if (-not (Test-Path $exe)) {
+            Write-Error "Launcher binary not found: $exe"
+          }
+          $size = [math]::Round((Get-Item $exe).Length / 1KB, 1)
+          Write-Host "OK — Launcher: $exe ($size KB)"
+
+      # ── Instalar Inno Setup via Chocolatey (preinstalado en runners) ──────
+      - name: Install Inno Setup
+        shell: pwsh
+        run: |
+          choco install innosetup --no-progress -y
+          Write-Host "OK — Inno Setup installed via Chocolatey."
+
+      # ── Build installer ───────────────────────────────────────────────────
+      - name: Build Inno Setup installer
+        shell: pwsh
+        run: |
+          $iscc = "C:\Program Files (x86)\Inno Setup 6\ISCC.exe"
+          .\scripts\windows\build-installer.ps1 -Version $env:VERSION -InnoSetupPath $iscc
+
+      - name: Verify installer binary
+        shell: pwsh
+        run: |
+          $exes = Get-ChildItem "dist" -Filter "wsl-labs-setup-*.exe"
+          if ($exes.Count -eq 0) {
+            Write-Error "No installer found in dist\"
+          }
+          foreach ($f in $exes) {
+            $size = [math]::Round($f.Length / 1MB, 2)
+            Write-Host "OK — Installer: $($f.Name) ($size MB)"
+          }
+
+      # ── Upload artefacto (siempre, para inspeccion) ───────────────────────
+      - name: Upload installer as workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: wsl-labs-setup-${{ steps.version.outputs.version }}
+          path: dist/wsl-labs-setup-*.exe
+          retention-days: 30
+
+      # ── Adjuntar al GitHub Release (solo en push de tag) ──────────────────
+      - name: Upload to GitHub Release
+        if: github.ref_type == 'tag'
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          $ErrorActionPreference = "Stop"
+
+          $installer = Get-ChildItem "dist" -Filter "wsl-labs-setup-*.exe" |
+                       Sort-Object LastWriteTime -Descending |
+                       Select-Object -First 1
+          if (-not $installer) {
+            Write-Error "Installer not found in dist\. Build step may have failed."
+          }
+          Write-Host "Installer: $($installer.Name)"
+
+          # 'git push tag' crea el tag pero NO el Release — hay que crearlo.
+          $releaseCheck = gh release view "${{ github.ref_name }}" 2>&1
+          if ($LASTEXITCODE -ne 0) {
+            Write-Host "Release ${{ github.ref_name }} no existe. Creandolo..."
+            gh release create "${{ github.ref_name }}" `
+              --title "WSL Labs ${{ github.ref_name }}" `
+              --notes "## WSL Labs ${{ github.ref_name }}`n`nInstalador generado automaticamente por GitHub Actions.`n`n### Instalacion`nDescarga \`\`wsl-labs-setup-$env:VERSION.exe\`\` y ejecutalo.`nEl launcher verifica WSL2, arranca los servicios Linux en localhost y abre el Control Center en http://localhost:9092.`n`n### Requisitos previos`n- Windows 10/11 (64-bit) con WSL2 habilitado`n- Distro Ubuntu instalada`n`n> **Aviso — binario sin firma digital**: este instalador no tiene firma digital en v0.x.`n> Si Windows SmartScreen muestra una advertencia, selecciona *Mas informacion* → *Ejecutar de todas formas*.`n`nVer [CHANGELOG](https://github.com/${{ github.repository }}) para el historial de cambios." `
+              --draft=false `
+              --prerelease=false
+            Write-Host "Release creado."
+          } else {
+            Write-Host "Release ${{ github.ref_name }} ya existe."
+          }
+
+          Write-Host "Uploading $($installer.Name) to release ${{ github.ref_name }}..."
+          gh release upload "${{ github.ref_name }}" "$($installer.FullName)" --clobber
+          Write-Host ""
+          Write-Host "OK. Asset disponible en:"
+          Write-Host "  https://github.com/${{ github.repository }}/releases/tag/${{ github.ref_name }}"

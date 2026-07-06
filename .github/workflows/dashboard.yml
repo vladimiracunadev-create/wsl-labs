@@ -1,0 +1,41 @@
+name: dashboard
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Verifica el Control Center (dashboard) que corre con Node stdlib.
+# El script verify-localhost.js valida el catalogo y la disponibilidad local
+# SIN dependencias npm.
+# ─────────────────────────────────────────────────────────────────────────────
+on:
+  push:
+    branches: ["**"]
+    paths:
+      - 'dashboard-server/**'
+      - 'index.html'
+      - 'dashboard.css'
+      - 'dashboard.js'
+      - 'labs.config.json'
+      - '.github/workflows/dashboard.yml'
+  pull_request:
+    paths:
+      - 'dashboard-server/**'
+      - 'index.html'
+      - 'dashboard.css'
+      - 'dashboard.js'
+      - 'labs.config.json'
+      - '.github/workflows/dashboard.yml'
+  workflow_dispatch:
+
+jobs:
+  verify:
+    name: Verify localhost dashboard
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Validate localhost dashboard
+        run: node dashboard-server/verify-localhost.js

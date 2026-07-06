@@ -1,0 +1,98 @@
+name: scripts
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Lint de scripts del repo:
+#   - shellcheck sobre los .sh (scripts/ y examples/)  → job Linux
+#   - PSScriptAnalyzer sobre los .ps1 (scripts/)       → job Windows
+# ─────────────────────────────────────────────────────────────────────────────
+on:
+  push:
+    branches: ["**"]
+    paths:
+      - '**/*.sh'
+      - '**/*.ps1'
+      - '.github/workflows/scripts.yml'
+  pull_request:
+    paths:
+      - '**/*.sh'
+      - '**/*.ps1'
+      - '.github/workflows/scripts.yml'
+  workflow_dispatch:
+
+jobs:
+  shellcheck:
+    name: shellcheck (bash)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Instalar shellcheck
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y shellcheck
+
+      - name: Ejecutar shellcheck sobre scripts y examples
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          # Recolecta todos los .sh de scripts/ y examples/ (si existen).
+          mapfile -t sh_files < <(find scripts examples -type f -name '*.sh' 2>/dev/null | sort -u)
+
+          if [ "${#sh_files[@]}" -eq 0 ]; then
+            echo "No se encontraron archivos .sh — nada que lintear."
+            exit 0
+          fi
+
+          echo "Analizando ${#sh_files[@]} script(s):"
+          printf '  %s\n' "${sh_files[@]}"
+
+          # -x permite seguir 'source' de otros scripts.
+          shellcheck -x "${sh_files[@]}"
+
+  psscriptanalyzer:
+    name: PSScriptAnalyzer (PowerShell)
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Ejecutar PSScriptAnalyzer sobre scripts/**/*.ps1
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+
+          # Asegura el modulo (preinstalado en windows-latest, pero por si acaso).
+          if (-not (Get-Module -ListAvailable -Name PSScriptAnalyzer)) {
+            Install-Module PSScriptAnalyzer -Force -Scope CurrentUser -Repository PSGallery
+          }
+          Import-Module PSScriptAnalyzer
+
+          $files = Get-ChildItem -Path scripts -Recurse -Filter *.ps1 -ErrorAction SilentlyContinue
+          if (-not $files -or $files.Count -eq 0) {
+            Write-Host "No se encontraron archivos .ps1 — nada que analizar."
+            exit 0
+          }
+
+          Write-Host "Analizando $($files.Count) script(s):"
+          $files | ForEach-Object { Write-Host "  $($_.FullName)" }
+
+          $results = $files | ForEach-Object {
+            Invoke-ScriptAnalyzer -Path $_.FullName -Severity Error, Warning
+          }
+
+          if ($results) {
+            $results | Format-Table -AutoSize | Out-String | Write-Host
+            $errors = @($results | Where-Object { $_.Severity -eq 'Error' })
+            if ($errors.Count -gt 0) {
+              Write-Error "PSScriptAnalyzer encontro $($errors.Count) error(es)."
+            } else {
+              Write-Host "Solo se encontraron warnings — no bloquea el build."
+            }
+          } else {
+            Write-Host "OK — sin observaciones de PSScriptAnalyzer."
+          }
