@@ -1,34 +1,67 @@
-# 10 - Backup, exportación e importación de distros WSL
+# 10 · Backup, export e import 💾
 
-## Objetivo
+> Exportar, importar y clonar distros WSL (backup).
 
-Exportar una distro WSL como archivo `.tar` e importarla como una nueva distro.
+---
 
-## Listar distros
+## 📋 Datos del lab
+
+| Campo | Valor |
+|---|---|
+| Tipo | learning |
+| Estado | ✅ ready |
+
+---
+
+## 🎯 Objetivo
+
+Exportar una distro WSL como archivo `.tar` e importarla como una nueva distro, para respaldar o clonar entornos.
+
+---
+
+## 📋 Pasos
+
+### 1. Listar distros instaladas
 
 ```powershell
 wsl --list --verbose
 ```
 
-## Exportar distro
+### 2. Exportar la distro a un `.tar`
 
 ```powershell
 wsl --export Ubuntu .\backups\ubuntu-wsl-labs.tar
 ```
 
-## Importar como nueva distro
+### 3. Importar como una nueva distro
 
 ```powershell
 wsl --import Ubuntu-WslLabs .\distros\Ubuntu-WslLabs .\backups\ubuntu-wsl-labs.tar --version 2
 ```
 
-## Ejecutar la nueva distro
+### 4. Ejecutar la nueva distro
 
 ```powershell
 wsl -d Ubuntu-WslLabs
 ```
 
-## Scripts incluidos
+### Scripts incluidos
 
 - `scripts/backup-wsl.ps1`
 - `scripts/restore-wsl.ps1`
+
+---
+
+## ✅ Comprobación
+
+Tras el import, `wsl --list --verbose` muestra `Ubuntu-WslLabs` junto a la distro original, y puedes entrar a ella con tus datos intactos.
+
+---
+
+## 🎯 Por qué importa
+
+Un `.tar` exportado es un backup portátil y reproducible de todo el entorno: sirve para migrar de máquina, versionar una imagen base o recuperarse de un desastre. Clonar distros también permite experimentar sin miedo, sabiendo que el original queda a salvo.
+
+---
+
+Parte de [wsl-labs](../../README.md) · ver [labs.config.json](../../labs.config.json)

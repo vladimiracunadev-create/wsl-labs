@@ -1,10 +1,27 @@
-# 01 - Instalación de Ubuntu en WSL
+# 01 · Instalación de Ubuntu 📦
 
-## Objetivo
+> Instalar y configurar WSL 2 + Ubuntu desde cero.
 
-Instalar Ubuntu sobre WSL 2 y dejarlo listo para laboratorios posteriores.
+---
 
-## Comandos desde PowerShell
+## 📋 Datos del lab
+
+| Campo | Valor |
+|---|---|
+| Tipo | learning |
+| Estado | ✅ ready |
+
+---
+
+## 🎯 Objetivo
+
+Instalar Ubuntu sobre WSL 2 y dejarlo listo para el resto de laboratorios de la suite.
+
+---
+
+## 📋 Pasos
+
+### 1. Revisar e instalar WSL desde PowerShell
 
 ```powershell
 wsl --status
@@ -13,13 +30,13 @@ wsl --install -d Ubuntu
 wsl --list --verbose
 ```
 
-## Entrar a Ubuntu
+### 2. Entrar a Ubuntu
 
 ```powershell
 wsl -d Ubuntu
 ```
 
-## Primeros comandos dentro de Ubuntu
+### 3. Actualizar el sistema y herramientas base
 
 ```bash
 sudo apt update
@@ -27,7 +44,9 @@ sudo apt upgrade -y
 sudo apt install -y git curl wget unzip build-essential ca-certificates
 ```
 
-## Validación
+---
+
+## ✅ Comprobación
 
 ```bash
 lsb_release -a
@@ -35,6 +54,14 @@ uname -a
 whoami
 ```
 
-## Resultado esperado
+Debes obtener una distribución Ubuntu funcionando sobre WSL 2.
 
-Una distribución Ubuntu funcionando sobre WSL 2.
+---
+
+## 🎯 Por qué importa
+
+Este es el punto de partida de toda la suite: sin una Ubuntu limpia sobre WSL 2 no hay servicios que levantar ni ejemplos que ejecutar. Dejar la base actualizada y con las herramientas de compilación instaladas evita fallos difíciles de diagnosticar en los labs posteriores.
+
+---
+
+Parte de [wsl-labs](../../README.md) · ver [labs.config.json](../../labs.config.json)
