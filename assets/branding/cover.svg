@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="640" viewBox="0 0 1280 640" fill="none" role="img" aria-label="WSL Control Center">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1280" y2="640" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#1b120c"/>
+      <stop offset="0.55" stop-color="#3a1e12"/>
+      <stop offset="1" stop-color="#18222d"/>
+    </linearGradient>
+    <radialGradient id="glowO" cx="0.16" cy="0.18" r="0.5">
+      <stop stop-color="#d96a3b" stop-opacity="0.55"/>
+      <stop offset="1" stop-color="#d96a3b" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="glowG" cx="0.9" cy="0.12" r="0.5">
+      <stop stop-color="#1f7a4f" stop-opacity="0.45"/>
+      <stop offset="1" stop-color="#1f7a4f" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="1280" height="640" rx="28" fill="url(#bg)"/>
+  <rect width="1280" height="640" rx="28" fill="url(#glowO)"/>
+  <rect width="1280" height="640" rx="28" fill="url(#glowG)"/>
+  <rect x="58" y="60" width="1164" height="520" rx="24" fill="#fffbf5" fill-opacity="0.06" stroke="#d96a3b" stroke-opacity="0.35"/>
+
+  <!-- Tux (pingüino WSL) minimalista -->
+  <g transform="translate(980 150)">
+    <ellipse cx="120" cy="150" rx="118" ry="140" fill="#18222d"/>
+    <ellipse cx="120" cy="168" rx="82" ry="108" fill="#fffbf5"/>
+    <circle cx="88" cy="92" r="16" fill="#fffbf5"/>
+    <circle cx="152" cy="92" r="16" fill="#fffbf5"/>
+    <circle cx="90" cy="94" r="7" fill="#18222d"/>
+    <circle cx="150" cy="94" r="7" fill="#18222d"/>
+    <path d="M104 108 L136 108 L120 132 Z" fill="#d96a3b"/>
+    <path d="M70 262 q-26 26 -6 40 q22 10 40 -14 Z" fill="#d96a3b"/>
+    <path d="M170 262 q26 26 6 40 q-22 10 -40 -14 Z" fill="#d96a3b"/>
+  </g>
+
+  <text x="96" y="176" fill="#fffbf5" font-family="Segoe UI, Arial, sans-serif" font-size="60" font-weight="800">WSL Control Center</text>
+  <text x="98" y="228" fill="#f2d9c8" font-family="Segoe UI, Arial, sans-serif" font-size="24">Montar, administrar y automatizar sistemas Linux con Windows Subsystem for Linux 2.</text>
+
+  <!-- chips de servicios -->
+  <g font-family="Segoe UI, Arial, sans-serif" font-size="20" font-weight="600" fill="#fffbf5">
+    <rect x="96"  y="290" width="150" height="46" rx="12" fill="#d96a3b"/><text x="118" y="320">🧭 :9092</text>
+    <rect x="262" y="290" width="150" height="46" rx="12" fill="#1f7a4f"/><text x="284" y="320">🌐 nginx</text>
+    <rect x="428" y="290" width="170" height="46" rx="12" fill="#a64822"/><text x="450" y="320">🐘 apache</text>
+    <rect x="614" y="290" width="150" height="46" rx="12" fill="#1f7a4f"/><text x="636" y="320">🟢 node</text>
+    <rect x="96"  y="352" width="160" height="46" rx="12" fill="#a64822"/><text x="118" y="382">🐍 flask</text>
+    <rect x="272" y="352" width="200" height="46" rx="12" fill="#1f7a4f"/><text x="294" y="382">🗄️ postgres</text>
+  </g>
+
+  <text x="96" y="470" fill="#c9a88f" font-family="Segoe UI, Arial, sans-serif" font-size="18" font-weight="600" letter-spacing="2">WINDOWS 11 · WSL2 · UBUNTU · NODE · GO</text>
+  <text x="96" y="540" fill="#8a95a1" font-family="Segoe UI, Arial, sans-serif" font-size="17">Parte de la línea: docker-labs · unikernel-labs · wsl-labs</text>
+</svg>
