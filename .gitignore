@@ -1,0 +1,36 @@
+# Sistemas operativos
+.DS_Store
+Thumbs.db
+
+# Editores
+.vscode/
+.idea/
+*.swp
+
+# Logs
+*.log
+logs/
+
+# Entornos Python
+.venv/
+venv/
+__pycache__/
+*.pyc
+
+# Node
+node_modules/
+npm-debug.log*
+
+# Variables de entorno
+.env
+.env.local
+
+# Backups WSL exportados
+*.tar
+*.tar.gz
+*.vhdx
+backups/
+
+# Archivos temporales
+tmp/
+temp/
