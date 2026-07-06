@@ -1,0 +1,15 @@
+{
+  "name": "wsl-labs-dashboard",
+  "version": "0.1.0",
+  "description": "WSL Control Center — dashboard sin dependencias que controla servicios Linux dentro de WSL2.",
+  "private": true,
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "verify": "node verify-localhost.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "license": "MIT"
+}

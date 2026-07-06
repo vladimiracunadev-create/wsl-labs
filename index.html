@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WSL Control Center</title>
+  <link rel="stylesheet" href="/dashboard.css">
+</head>
+<body>
+  <main class="shell">
+    <!-- Hero ─────────────────────────────────────────────────────────────── -->
+    <section class="hero">
+      <div class="hero-copy">
+        <span class="eyebrow">WSL Workspace</span>
+        <h1>WSL Control Center</h1>
+        <p id="hero-subtitle">
+          Launcher en Windows para servicios Linux que viven dentro de WSL2. Levanta, detiene y
+          supervisa cada laboratorio en localhost sin salir de este panel.
+        </p>
+      </div>
+
+      <div class="hero-actions">
+        <button id="refresh-all" class="btn btn-primary">🔃 Actualizar</button>
+        <button id="start-all" class="btn btn-secondary">▶ Levantar todo</button>
+        <button id="stop-all" class="btn btn-secondary">⏹ Bajar todo</button>
+        <a class="btn btn-secondary" href="https://github.com/vladimiracunadev-create/wsl-labs" target="_blank" rel="noreferrer">📚 Docs</a>
+        <span id="generated-at" class="tag">Sin lecturas</span>
+      </div>
+
+      <div class="metrics">
+        <div class="metric">
+          <div class="metric-label">Servicios totales</div>
+          <div id="metric-total" class="metric-value">0</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">Saludables</div>
+          <div id="metric-healthy" class="metric-value">0</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">Detenidos</div>
+          <div id="metric-stopped" class="metric-value">0</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">Distro WSL</div>
+          <div id="metric-distro" class="metric-value">—</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Grid de labs ─────────────────────────────────────────────────────── -->
+    <div class="section-head">
+      <div>
+        <h2>Laboratorios</h2>
+        <p class="section-copy">Servicios Linux controlados vía wsl.exe. Los de tipo learning solo documentan.</p>
+      </div>
+    </div>
+    <div class="lab-grid" id="lab-grid">
+      <div class="empty">Cargando laboratorios…</div>
+    </div>
+
+    <!-- Logs ─────────────────────────────────────────────────────────────── -->
+    <section class="logs">
+      <h2 id="logs-title">Salida operativa</h2>
+      <pre id="logs-output">Actualiza el panel o abre los logs de un laboratorio para ver aquí lo que ocurre dentro de WSL.</pre>
+    </section>
+  </main>
+
+  <script src="/dashboard.js"></script>
+</body>
+</html>
