@@ -93,7 +93,7 @@ sin la fricción de una VM tradicional.
 
 ```mermaid
 timeline
-    title Hitos de WSL (2014 → 2022)
+    title Hitos de WSL (2014 → 2026)
     2014 : Satya Nadella CEO
          : "Microsoft loves Linux"
          : .NET open source · Azure con carga Linux
@@ -108,6 +108,12 @@ timeline
          : Apps Linux con GUI en Windows
     2022 : systemd oficial
          : /etc/wsl.conf [boot] systemd=true
+    2023 : Mirrored networking · Sparse VHD
+         : App WSL Settings (GUI) · wsl --manage
+    2025 : WSL open source (Build 2025)
+         : github.com/microsoft/WSL
+    2026 : WSL Containers (WSLC)
+         : imágenes, volúmenes y redes nativas (wslc)
 ```
 
 ---
@@ -157,18 +163,30 @@ flowchart TB
 
 ---
 
-## 3. 🖥️ WSL no tiene "plataforma desktop" como Docker
+## 3. 🖥️ WSL y la "plataforma desktop" (la brecha con Docker se está cerrando)
 
-A diferencia de **Docker** —que trae **Docker Desktop**, con **GUI oficial**,
-panel de contenedores, imágenes y volúmenes— **WSL se gestiona por CLI**:
-`wsl.exe` desde PowerShell/CMD, más **Windows Terminal** como consola. **No hay un
-panel de control oficial de escritorio** para arrancar/parar servicios ni ver su
-salud de un vistazo.
+Históricamente, frente a **Docker** —que trae **Docker Desktop** con **GUI
+oficial**, panel de contenedores, imágenes y volúmenes— **WSL se gestionaba solo
+por CLI** (`wsl.exe` + Windows Terminal), sin panel de escritorio para operar
+servicios de un vistazo. Eso **ya no es del todo cierto**: Microsoft ha ido
+añadiendo piezas de "plataforma".
 
-**Aquí encaja `wsl-labs`:** aporta ese **"plano de control" que le falta** a WSL:
+- 🪟 **App WSL Settings (GUI)** — aplicación gráfica oficial para gestionar la
+  configuración de WSL (equivale a editar `.wslconfig`, pero con categorías y
+  validación). Ya hay una interfaz de escritorio, aunque orientada a *ajustes*, no
+  a *operar servicios*.
+- 🧩 **Integración con Dev Home** ("Environments") para lanzar y crear entornos,
+  incluidas distros WSL.
+- 🐳 **WSL Containers (WSLC)** — desde 2026, WSL trae **imágenes, volúmenes y redes
+  nativas** con el comando `wslc` (ver la sección **§4** más abajo).
+  Esto acerca WSL a la paridad con Docker **sin depender de Docker Desktop**.
 
-- 🧭 **Control Center** web en **`http://localhost:9092`** para arrancar/detener
-  servicios y ver su estado (📦 Instalar → ▶ Levantar), como haría Docker Desktop.
+**Dónde encaja `wsl-labs`:** WSLC cubre *contenedores*; lo que sigue sin tener una
+GUI oficial es **operar servicios Linux "clásicos"** (nginx, apache, postgres…)
+directamente sobre la distro. Ese es el hueco que llena este repo:
+
+- 🧭 **Control Center** web en **`http://localhost:9092`** para instalar, arrancar y
+  detener esos servicios y ver su salud (📦 Instalar → ▶ Levantar), al estilo panel.
 - 🪟 **Launcher de Windows** (`.exe`) que detecta la distro, levanta el stack y
   abre el navegador.
 
@@ -177,16 +195,96 @@ Ver el detalle en el [README](../README.md) y en la guía
 
 > [!NOTE]
 > Esta pieza es deliberadamente **extensible**: el Control Center puede crecer con
-> **más servicios y funcionalidades** a futuro (nuevos labs, métricas, acciones).
+> **más servicios y funcionalidades** a futuro (nuevos labs, métricas, acciones,
+> e incluso integrarse con `wslc` para contenedores).
 
 ---
 
-## 4. ⌨️ Referencia completa de comandos WSL (`wsl.exe` desde Windows)
+## 4. 🆕 WSL hoy (2025-2026): open source y contenedores nativos (WSLC)
+
+WSL dejó de ser una caja negra y se acercó mucho a Docker. Dos cambios grandes:
+
+### 🔓 WSL es open source (Build 2025)
+
+El **19 de mayo de 2025**, en Microsoft Build, **WSL se liberó como open source**.
+El código vive en **[github.com/microsoft/WSL](https://github.com/microsoft/WSL)**.
+
+| Componente | Rol | Estado |
+| --- | --- | --- |
+| `wsl.exe`, `wslconfig.exe`, `wslg.exe` | Ejecutables de entrada desde Windows | ✅ Open source |
+| `wslservice.exe` | Servicio que levanta la VM y las distros | ✅ Open source |
+| `init`, `gns`, `localhost`, `plan9` | Daemons Linux (arranque, red, port-forward, archivos) | ✅ Open source |
+| [`microsoft/WSL2-Linux-Kernel`](https://github.com/microsoft/WSL2-Linux-Kernel) | Kernel Linux de WSL 2 | ✅ Open source |
+| [`microsoft/wslg`](https://github.com/microsoft/wslg) | GUI de apps Linux (Wayland/X) | ✅ Open source |
+| `Lxcore.sys` (driver WSL 1), `P9rdr.sys`/`p9np.dll` | Kernel de WSL 1 y redirección `\\wsl.localhost` | 🔒 Aún cerrados |
+
+### 🐳 WSL Containers (WSLC) — imágenes, volúmenes y redes nativas
+
+Esto es lo que probablemente escuchaste: **Windows metió, dentro de WSL, un motor
+de contenedores tipo Docker** — con **imágenes, volúmenes y redes** — para correr
+cargas Linux **sin necesidad de Docker Desktop** (cuyo backend WSL2 es una fuente
+habitual de fallos para muchos usuarios). Tiene dos caras:
+
+- **CLI `wslc.exe`** — interfaz familiar (muy parecida a `docker`):
+
+  ```powershell
+  # Correr un contenedor
+  wslc run --rm -it ubuntu:latest bash -c "echo Hola desde un contenedor WSL"
+  # Listar imágenes
+  wslc image ls
+  # Servidor web publicando puerto
+  wslc run -it --rm -d -p 8080:80 --name web nginx
+  curl localhost:8080
+  # Ver y detener contenedores
+  wslc container ps
+  wslc container stop web
+  ```
+
+- **API de contenedores WSL** — paquete NuGet `Microsoft.WSL.Containers`
+  (proyecciones C, C# y C++/WinRT) para que apps de Windows **usen contenedores
+  Linux programáticamente** (objetos `WslcService`, `Session`, `Container`,
+  `Process`; soporta montajes de archivos, red, **GPU** y `stdin`/`stdout`).
+
+Capacidades (preview): **imágenes** (build, pull, push, import, save, inspect,
+prune) · **contenedores** (create/run/start/kill/export con límites `--cpus`,
+`--memory`, `--shm-size`) · **redes** (crear/gestionar, alias, publicar puertos) ·
+**volúmenes respaldados por VHD**.
+
+> [!TIP]
+> Comparativa mental: `wslc` ≈ `docker` nativo dentro de WSL. Para **contenedores**
+> usa `wslc`; para **servicios Linux "de sistema"** (nginx/apache/postgres como
+> demonios de la distro) usa el panel de **`wsl-labs`**. Son complementarios.
+
+### 📦 Distros desde imágenes de contenedor
+
+También puedes **construir una distro WSL a partir de una imagen Docker/OCI**:
+exportas el rootfs de un contenedor a un `.tar` (gzip) y lo importas con
+`wsl --import`. Ver *Build a Custom Linux Distro for WSL* en la documentación de
+Microsoft.
+
+### 🌐 Otras mejoras recientes
+
+| Función | Qué aporta | Cómo |
+| --- | --- | --- |
+| **Mirrored networking** | Espeja las interfaces de red de Windows en Linux (mejor compatibilidad) | `networkingMode=mirrored` en `.wslconfig` (Win 11 22H2+) |
+| **Sparse VHD** | El disco de la distro se **encoge** solo | `wsl --manage <distro> --set-sparse true` |
+| **DNS tunneling / autoProxy** | Mejor DNS y proxy heredado de Windows | `.wslconfig` |
+| **`wsl --manage`** | Gestión avanzada de la distro (mover, sparse, default-user) | CLI |
+
+> [!NOTE]
+> **Documento vivo:** WSL evoluciona rápido. Fuentes oficiales:
+> [WSL Containers](https://learn.microsoft.com/en-us/windows/wsl/wsl-container) ·
+> [WSL open source](https://learn.microsoft.com/en-us/windows/wsl/opensource) ·
+> [anuncio Build 2025](https://blogs.windows.com/windowsdeveloper/2025/05/19/the-windows-subsystem-for-linux-is-now-open-source/).
+
+---
+
+## 5. ⌨️ Referencia completa de comandos WSL (`wsl.exe` desde Windows)
 
 > [!TIP]
 > Estos comandos se ejecutan desde **PowerShell / CMD / Windows Terminal**, no
 > dentro de la distro. Para comandos de dentro de Linux, ve a la
-> [sección 5](#5--comandos-dentro-de-la-distro-linux-útiles-en-wsl).
+> [sección 6](#6--comandos-dentro-de-la-distro-linux-útiles-en-wsl).
 
 ### 📦 Instalación y actualización
 
@@ -290,7 +388,7 @@ wsl -d Ubuntu -u root -- bash -lc "service postgresql start && pg_isready"
 
 ---
 
-## 5. 🐧 Comandos dentro de la distro (Linux) útiles en WSL
+## 6. 🐧 Comandos dentro de la distro (Linux) útiles en WSL
 
 Una vez dentro de la distro, la gestión es Linux estándar:
 
@@ -311,7 +409,7 @@ Una vez dentro de la distro, la gestión es Linux estándar:
 
 ---
 
-## 6. ⚙️ Configuración: `.wslconfig` y `/etc/wsl.conf`
+## 7. ⚙️ Configuración: `.wslconfig` y `/etc/wsl.conf`
 
 Hay **dos archivos** de configuración con ámbitos distintos:
 
@@ -364,7 +462,7 @@ default=vlad            # usuario por defecto al entrar
 
 ---
 
-## 7. 🔗 Ver también
+## 8. 🔗 Ver también
 
 - [`docs/00-que-es-wsl.md`](00-que-es-wsl.md) — Fundamentos de WSL
 - [`docs/01-instalacion-wsl.md`](01-instalacion-wsl.md) — Instalación paso a paso
