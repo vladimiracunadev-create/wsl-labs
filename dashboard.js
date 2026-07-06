@@ -91,7 +91,12 @@ function renderLabCards() {
 
       // Botones: solo los servicios con comando disponible muestran controles.
       const actions = [];
-      if (isService && lab.hasStart) {
+      // Si falta instalarlo, el botón principal es "Instalar" (corre el script
+      // como root en WSL, sin contraseña — estilo Docker).
+      if (isService && lab.status === 'missing' && lab.hasInstall) {
+        actions.push(`<button class="btn btn-primary" data-action="install" data-id="${id}" title="Instala el servicio en WSL (puede tardar 1-2 min)">📦 Instalar</button>`);
+      }
+      if (isService && lab.hasStart && lab.status !== 'missing') {
         actions.push(`<button class="btn btn-primary" data-action="start" data-id="${id}">▶ Levantar</button>`);
       }
       if (isService && lab.hasStop) {

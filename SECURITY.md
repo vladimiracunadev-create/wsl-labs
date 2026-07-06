@@ -21,6 +21,29 @@ control **local** entre Windows y WSL2.
 
 ---
 
+## ⚙️ Ejecución como `root` en WSL (modelo de confianza)
+
+El Control Center ejecuta los comandos del catálogo dentro de WSL **como `root`**
+vía `wsl.exe -d Ubuntu -u root -- …`. Esto elimina la fricción de contraseñas
+(Windows ya autenticó al usuario) y es el mismo **modelo de confianza que Docker
+Desktop**: la herramienta corre privilegiada dentro de su runtime.
+
+Consecuencia honesta: **quien pueda acceder al panel puede ejecutar los comandos
+del catálogo como `root` en la distro** (instalar paquetes, arrancar/detener
+servicios). Mitigaciones:
+
+- 🏠 El servidor **escucha solo en `127.0.0.1`** (loopback), nunca en la red.
+- 🔑 Token opcional **`WSL_LABS_TOKEN`** para exigir autorización en `/api/*`.
+- 🔒 Solo se ejecutan los **comandos definidos en `labs.config.json`** (no comandos
+  arbitrarios).
+- ❌ **No expongas el puerto `:9092` a la red** (port forwarding, túneles).
+
+> [!WARNING]
+> No abras `:9092` a la red. Con ejecución como `root`, exponerlo equivale a dar
+> ejecución remota de comandos privilegiados dentro de tu distro WSL2.
+
+---
+
 ## 🔑 Token opcional (`WSL_LABS_TOKEN`)
 
 Por defecto, en modo dev local, la API es **abierta** (el acceso ya está
@@ -55,6 +78,7 @@ o la cookie `wsl_labs_token=<token>`.
 | 📏 Límite de body | 8 KB máximo por request |
 | ✅ Validación de `id` | Solo `id` alfanuméricos del catálogo pueden ejecutarse |
 | 🔒 Comandos del catálogo | Solo se ejecutan comandos definidos en `labs.config.json` |
+| ⚙️ Root vía runtime | Corre como `root` en WSL (estilo Docker); confinado a loopback + catálogo |
 
 ---
 

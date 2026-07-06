@@ -40,39 +40,52 @@ Abre → **<http://localhost:9092>**
 
 ## 🧰 2.5 · Puesta a punto inicial (una vez por distro)
 
-Antes de poder arrancar servicios desde el panel hay que instalarlos y habilitar
-`sudo` sin contraseña. Orden recomendado:
+El flujo recomendado es **100 % desde el panel**, sin contraseñas y sin terminal.
+El Control Center ejecuta los comandos dentro de WSL **como `root`** vía
+`wsl.exe -d Ubuntu -u root -- …` (Windows ya autenticó al usuario), igual que
+Docker corre privilegiado. Por eso **no** se pide contraseña nunca.
+
+```text
+1. Abre  →  http://localhost:9092
+2. Pulsa 📦 Instalar   → corre el install-script del servicio como root
+3. Pulsa ▶ Levantar    → arranca el servicio (healthy)
+```
+
+Eso es todo: cada servicio se instala y se levanta con un clic, como en Docker.
+
+> [!NOTE]
+> El botón **📦 Instalar** llama al endpoint `POST /api/wsl/install`, que ejecuta
+> el `install-*.sh` correspondiente como `root`. Los `install-*.sh` son
+> **idempotentes**: puedes re-instalar sin miedo. Cada uno imprime al final
+> `[wsl-labs] <servicio> OK en :<puerto>` o el fallo.
+
+### 🖥️ Alternativa: `make up-*` por terminal (opcional)
+
+Solo si prefieres operar desde una terminal **como tu propio usuario** (no vía el
+panel) necesitas `sudo` sin contraseña, porque los targets `make up-*` usan
+`sudo service …`:
 
 ```powershell
 # (1) Herramientas base (curl, git, utilidades) — idempotente
 wsl bash scripts/install-base.sh
 
-# (2) Instalar y configurar el/los servicio(s) que vayas a usar — idempotentes
+# (2) Instalar el/los servicio(s) que vayas a usar — idempotentes
 wsl bash scripts/install-nginx.sh        # nginx en :8080
 wsl bash scripts/install-apache-php.sh   # apache + php en :8081
 wsl bash scripts/install-postgresql.sh   # postgresql en :5432
 wsl bash scripts/install-node.sh         # node (API en :8082)
 wsl bash scripts/install-python.sh       # python + flask (app en :8083)
 
-# (3) Passwordless sudo — SOLO UNA VEZ (lo necesita el dashboard)
+# (3) Passwordless sudo — SOLO para uso por terminal como tu usuario
 wsl bash scripts/setup-passwordless-sudo.sh
 
-# (4) Levantar el Control Center
-make serve
+# (4) Levantar servicios por terminal
+make up-nginx        # etc.
 ```
 
-> [!IMPORTANT]
-> Sin el paso **(3)** los botones **▶** de **nginx (05)**, **apache (06)** y
-> **postgresql (09)** piden la contraseña de `sudo` y **fallan** desde el panel,
-> porque el arranque usa `sudo service …` de forma no interactiva. **node (07)**
-> y **flask (08)** no usan `sudo`: funcionan en cuanto están instalados (pasos 1-2),
-> sin necesidad del paso 3.
-
-<!-- separador entre callouts -->
-
 > [!NOTE]
-> Todos los `install-*.sh` son **idempotentes**: puedes re-ejecutarlos sin miedo.
-> Cada uno imprime al final `[wsl-labs] <servicio> OK en :<puerto>` o el fallo.
+> `setup-passwordless-sudo.sh` **ya no es necesario para el panel** (el panel usa
+> `-u root`). Solo aplica a este flujo de terminal con `make up-*`.
 
 ---
 

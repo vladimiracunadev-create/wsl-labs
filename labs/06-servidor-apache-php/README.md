@@ -39,13 +39,17 @@ sudo a2ensite wsl-php.conf
 ## 🚀 Ejecutar
 
 > [!IMPORTANT]
-> Antes de arrancar por primera vez, ejecuta desde la raíz del repo el
-> install-script (instala Apache + PHP, añade `Listen 8081` y activa el VirtualHost)
-> y, para controlarlo con el botón **▶** del dashboard, habilita `sudo` sin contraseña:
+> Desde el panel ([http://localhost:9092](http://localhost:9092)) basta pulsar
+> **📦 Instalar** (instala Apache + PHP, añade `Listen 8081` y activa el
+> VirtualHost) y luego **▶ Levantar** — sin contraseña, como Docker: el Control
+> Center ejecuta los comandos en WSL como `root`.
+>
+> El passwordless sudo **solo** aplica si prefieres levantarlo por terminal como
+> tu usuario con `make up-apache`:
 >
 > ```bash
 > wsl bash scripts/install-apache-php.sh
-> wsl bash scripts/setup-passwordless-sudo.sh   # solo una vez
+> wsl bash scripts/setup-passwordless-sudo.sh   # solo para make up-* por terminal
 > ```
 
 ```bash

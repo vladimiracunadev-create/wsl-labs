@@ -40,13 +40,17 @@ sudo nginx -t
 ## 🚀 Ejecutar
 
 > [!IMPORTANT]
-> Antes de arrancar por primera vez, ejecuta desde la raíz del repo el
-> install-script (deja nginx instalado y configurado en `:8080`) y, para poder
-> controlarlo con el botón **▶** del dashboard, habilita `sudo` sin contraseña:
+> Desde el panel ([http://localhost:9092](http://localhost:9092)) basta pulsar
+> **📦 Instalar** (deja nginx instalado y configurado en `:8080`) y luego
+> **▶ Levantar** — sin contraseña, como Docker: el Control Center ejecuta los
+> comandos en WSL como `root`.
+>
+> El passwordless sudo **solo** aplica si prefieres levantarlo por terminal como
+> tu usuario con `make up-nginx`:
 >
 > ```bash
 > wsl bash scripts/install-nginx.sh
-> wsl bash scripts/setup-passwordless-sudo.sh   # solo una vez
+> wsl bash scripts/setup-passwordless-sudo.sh   # solo para make up-* por terminal
 > ```
 
 ```bash

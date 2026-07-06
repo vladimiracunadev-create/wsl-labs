@@ -37,22 +37,26 @@ arranca y monitorea servicios reales dentro de la distro vía `wsl.exe`, un
 ## 📡 Estado de los servicios
 
 > El mecanismo **Windows ↔ WSL está verificado**: un servicio corriendo en WSL es
-> alcanzable desde el `localhost` de Windows con respuesta **HTTP 200**. Ahora bien,
-> cada servicio **requiere su `install-*.sh`** para existir en la distro, y los que
-> arrancan con `sudo` requieren además `scripts/setup-passwordless-sudo.sh` (una vez).
+> alcanzable desde el `localhost` de Windows con respuesta **HTTP 200**. El panel
+> ejecuta los comandos dentro de WSL **como `root`** (`wsl.exe -u root`), así que
+> cada servicio es **instalable y operable con 1 clic desde el panel** (📦 Instalar
+> → ▶ Levantar), sin contraseñas. **nginx quedó probado end-to-end**: instalado
+> desde el panel como root, escuchando en `:8080`, con `curl http://localhost:8080`
+> devolviendo **HTTP 200** desde Windows.
 
 | Servicio | Lab | Puerto | Estado | Puesta en marcha |
 |---|:---:|---:|:---:|---|
 | 🧭 Control Center | — | 9092 | 🟢 Operativo | Node.js en Windows |
-| 🌐 nginx | 05 | 8080 | 🟡 Requiere setup | install + **passwordless sudo** |
-| 🐘 apache + php | 06 | 8081 | 🟡 Requiere setup | install + **passwordless sudo** |
-| 🟢 node API | 07 | 8082 | 🟢 1-click tras instalar | solo `install-node.sh` (sin sudo) |
-| 🐍 flask | 08 | 8083 | 🟢 1-click tras instalar | solo `install-python.sh` (sin sudo) |
-| 🗄️ postgresql | 09 | 5432 | 🟡 Requiere setup | install + **passwordless sudo** |
-| 🧱 mini-servidor | 11 | 8090 | 🟡 Requiere setup | usa nginx + postgres (sudo) |
+| 🌐 nginx | 05 | 8080 | 🟢 1-click (root) ✔ probado E2E | 📦 Instalar → ▶ Levantar |
+| 🐘 apache + php | 06 | 8081 | 🟢 1-click (root) | 📦 Instalar → ▶ Levantar |
+| 🟢 node API | 07 | 8082 | 🟢 1-click (root) | 📦 Instalar → ▶ Levantar |
+| 🐍 flask | 08 | 8083 | 🟢 1-click (root) | 📦 Instalar → ▶ Levantar |
+| 🗄️ postgresql | 09 | 5432 | 🟢 1-click (root) | 📦 Instalar → ▶ Levantar |
+| 🧱 mini-servidor | 11 | 8090 | 🟢 1-click (root) | 📦 Instalar → ▶ Levantar |
 
-**Leyenda:** 🟢 operativo / 1-click · 🟡 operativo tras el setup inicial (ver
-[RUNBOOK.md](RUNBOOK.md) → "Puesta a punto inicial").
+**Leyenda:** 🟢 instalable y operable con 1 clic desde el panel (root, sin
+contraseña) · ✔ probado E2E. El panel corre privilegiado, estilo Docker; el
+passwordless sudo solo aplica al flujo por terminal (ver [RUNBOOK.md](RUNBOOK.md)).
 
 ---
 
@@ -86,8 +90,8 @@ arranca y monitorea servicios reales dentro de la distro vía `wsl.exe`, un
 
 | Riesgo | Impacto |
 |---|---|
-| `sudo` con contraseña para servicios | El panel no arranca nginx/apache/postgres hasta ejecutar `scripts/setup-passwordless-sudo.sh` (una vez) |
-| Servicio no instalado en la distro | El botón ▶ falla hasta correr el `install-*.sh` correspondiente |
+| El panel ejecuta comandos como `root` en WSL | Modelo de confianza equivalente a Docker Desktop; mitigado por loopback + token (ver [SECURITY.md](SECURITY.md)) |
+| Servicio no instalado en la distro | Se resuelve con el botón 📦 **Instalar** del panel (o el `install-*.sh`) |
 | systemd no habilitado en la distro | Se usa `service` en lugar de `systemctl` |
 | Instalador sin firma digital (v0.x) | Windows SmartScreen puede advertir |
 | Node.js instalado dentro de WSL en vez de Windows | El Control Center no arranca |

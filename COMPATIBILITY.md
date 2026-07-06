@@ -46,28 +46,26 @@ La experiencia principal está diseñada para:
 
 ## 🔧 Requisitos de operación
 
-Para que los servicios sean **realmente operativos** desde el Control Center hay
-que instalarlos y configurarlos una vez dentro de WSL:
+El dashboard ejecuta los comandos dentro de WSL **como `root`** vía
+`wsl.exe -d Ubuntu -u root -- …`, así que **no requiere passwordless sudo**: nunca
+pide contraseña (igual que Docker corre privilegiado). Desde el panel basta:
 
-1. **Instalar cada servicio** con su script:
-   `scripts/install-nginx.sh`, `install-apache-php.sh`, `install-postgresql.sh`,
-   `install-node.sh`, `install-python.sh` (ver [RUNBOOK.md](RUNBOOK.md) → "Puesta a punto inicial").
-2. **Configurar `sudo` sin contraseña una sola vez** para los servicios que lo
-   requieren, ejecutando `scripts/setup-passwordless-sudo.sh`.
+1. **📦 Instalar** — el botón corre el `install-*.sh` del servicio como `root`
+   (endpoint `POST /api/wsl/install`).
+2. **▶ Levantar** — arranca el servicio, sin contraseña.
 
-| Servicio | Lab | Puerto | ¿Necesita passwordless sudo? |
-|---|:---:|---:|:---:|
-| 🌐 nginx | 05 | 8080 | ✅ sí (`sudo service nginx …`) |
-| 🐘 apache + php | 06 | 8081 | ✅ sí (`sudo service apache2 …`) |
-| 🗄️ postgresql | 09 | 5432 | ✅ sí (`sudo service postgresql …`) |
-| 🟢 node API | 07 | 8082 | ❌ no (corre en el userland, sin `sudo`) |
-| 🐍 flask | 08 | 8083 | ❌ no (corre en el userland, sin `sudo`) |
+| Servicio | Lab | Puerto | Desde el panel (root) | passwordless sudo |
+|---|:---:|---:|:---:|:---:|
+| 🌐 nginx | 05 | 8080 | ✅ 1-click | opcional (solo terminal) |
+| 🐘 apache + php | 06 | 8081 | ✅ 1-click | opcional (solo terminal) |
+| 🗄️ postgresql | 09 | 5432 | ✅ 1-click | opcional (solo terminal) |
+| 🟢 node API | 07 | 8082 | ✅ 1-click | no aplica (sin `sudo`) |
+| 🐍 flask | 08 | 8083 | ✅ 1-click | no aplica (sin `sudo`) |
 
 > [!IMPORTANT]
-> nginx, apache y postgres se arrancan vía `sudo service …`. Si **no** ejecutaste
-> `scripts/setup-passwordless-sudo.sh`, el botón **▶** del dashboard se queda
-> esperando la contraseña de `sudo` y el arranque falla. node y flask no usan
-> `sudo`, así que funcionan "1-click" en cuanto están instalados.
+> `scripts/setup-passwordless-sudo.sh` **ya no es requisito del dashboard**. Solo
+> es útil si ejecutas los targets `make up-*` desde una terminal **como tu propio
+> usuario** (no `root`), porque en ese flujo el arranque usa `sudo service …`.
 
 ---
 

@@ -76,6 +76,8 @@ make serve            # o: node dashboard-server/server.js
 ```
 
 Abre **<http://localhost:9092>** y controla los servicios desde el panel.
+El panel instala y levanta cada servicio con un clic, como Docker (corre
+privilegiado en WSL, sin contraseñas): **📦 Instalar → ▶ Levantar**.
 
 > [!TIP]
 > ¿Prefieres un `.exe`? Descarga el **Launcher** desde

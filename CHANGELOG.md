@@ -7,9 +7,37 @@ el proyecto adopta [versionado semántico](https://semver.org/lang/es/).
 
 ---
 
-## [Unreleased]
+## [0.1.1] - 2026-07-06
 
-_Sin cambios pendientes al momento._
+Operatividad real estilo **Docker**: el panel deja de pedir contraseña.
+
+### Changed
+
+- 🔑 El Control Center ejecuta los comandos en WSL como **root**
+  (`wsl.exe -u root`), igual que Docker corre privilegiado. **Ya no se pide
+  contraseña** para arrancar/detener servicios ni para instalarlos. El paso de
+  *passwordless sudo* deja de ser necesario para el panel (queda opcional para
+  uso por terminal con `make up-*`).
+
+### Added
+
+- 📦 **Botón "Instalar"** en cada servicio no instalado — endpoint
+  `POST /api/wsl/install` que corre el `install-*.sh` del lab como root desde el
+  propio panel. Flujo 1-click: **Instalar → Levantar**, sin terminal ni contraseña.
+- 🔎 Detección de "**No instalado**" en el dashboard (sonda de binarios en WSL) y
+  pista de instalación por servicio.
+
+### Fixed
+
+- 🐛 La detección de servicios devolvía vacío por un exit-code y por una
+  peculiaridad de `wsl.exe` (las variables asignadas dentro de `bash -lc` no se
+  expanden); ahora usa comandos literales sin variables de shell.
+
+### Verified
+
+- ✅ nginx instalado y operado desde el panel (root, sin contraseña); `curl`
+  desde Windows a `http://localhost:8080` → **HTTP 200**; ciclo
+  Levantar/Detener/Levantar controlando el servicio real.
 
 ---
 

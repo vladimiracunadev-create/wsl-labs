@@ -42,13 +42,17 @@ CREATE DATABASE wsl_labs OWNER wsl_user;
 ## 🚀 Ejecutar
 
 > [!IMPORTANT]
-> Antes de arrancar por primera vez, ejecuta desde la raíz del repo el
-> install-script (instala PostgreSQL y asegura que escucha en `localhost:5432`)
-> y, para controlarlo con el botón **▶** del dashboard, habilita `sudo` sin contraseña:
+> Desde el panel ([http://localhost:9092](http://localhost:9092)) basta pulsar
+> **📦 Instalar** (instala PostgreSQL y asegura que escucha en `localhost:5432`) y
+> luego **▶ Levantar** — sin contraseña, como Docker: el Control Center ejecuta
+> los comandos en WSL como `root`.
+>
+> El passwordless sudo **solo** aplica si prefieres levantarlo por terminal como
+> tu usuario con `make up-postgres`:
 >
 > ```bash
 > wsl bash scripts/install-postgresql.sh
-> wsl bash scripts/setup-passwordless-sudo.sh   # solo una vez
+> wsl bash scripts/setup-passwordless-sudo.sh   # solo para make up-* por terminal
 > ```
 
 ```bash

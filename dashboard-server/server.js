@@ -31,8 +31,13 @@ const HOST = '127.0.0.1';
 // protegidos; sin la variable el acceso es abierto (modo dev local).
 const AUTH_TOKEN = process.env.WSL_LABS_TOKEN || null;
 
+// Usuario con el que se ejecutan los comandos dentro de WSL. Por defecto `root`
+// (privilegiado sin contraseña, estilo Docker). Se puede sobreescribir por env.
+const RUN_USER = process.env.WSL_LABS_USER || 'root';
+
 // Timeouts de ejecucion de comandos WSL (milisegundos).
 const EXEC_TIMEOUT_MS = 30_000;   // start/stop pueden tardar (arranque de servicios)
+const INSTALL_TIMEOUT_MS = 300_000; // apt install puede tardar minutos
 const LOGS_TIMEOUT_MS = 12_000;   // lectura de logs
 const HEALTH_TIMEOUT_MS = 2_500;  // health-check HTTP/TCP
 
@@ -130,7 +135,10 @@ function runInWsl(distro, command, timeoutMs = EXEC_TIMEOUT_MS) {
 
     let child;
     try {
-      child = spawn('wsl.exe', ['-d', distro, '--', 'bash', '-lc', wrapped], {
+      // -u root: ejecuta privilegiado SIN pedir contraseña (Windows ya autenticó
+      // al usuario). Es el equivalente WSL de cómo Docker corre privilegiado, y
+      // evita que los `sudo` interactivos cuelguen las acciones del panel.
+      child = spawn('wsl.exe', ['-d', distro, '-u', RUN_USER, '--', 'bash', '-lc', wrapped], {
         stdio: ['ignore', 'pipe', 'pipe'],
         windowsHide: true,
       });
@@ -292,6 +300,7 @@ async function buildOverview() {
         requires: lab.requires || null,
         installHint: lab.installHint || null,
         installed,
+        hasInstall: Boolean(lab.installCommand),
         hasStart: Boolean(lab.startCommand),
         hasStop: Boolean(lab.stopCommand),
         hasLogs: Boolean(lab.logsCommand),
@@ -377,6 +386,7 @@ const ACTION_COMMAND = {
   start: 'startCommand',
   stop: 'stopCommand',
   logs: 'logsCommand',
+  install: 'installCommand',
 };
 
 async function handleWslAction(action, body) {
@@ -399,7 +409,8 @@ async function handleWslAction(action, body) {
     return { statusCode: 400, payload: { ok: false, error: `El lab ${id} no define ${commandKey}.` } };
   }
 
-  const timeout = action === 'logs' ? LOGS_TIMEOUT_MS : EXEC_TIMEOUT_MS;
+  const timeout =
+    action === 'logs' ? LOGS_TIMEOUT_MS : action === 'install' ? INSTALL_TIMEOUT_MS : EXEC_TIMEOUT_MS;
   const result = await runInWsl(distro, command, timeout);
   const output = action === 'logs' ? takeLastLines(result.output || '(sin output)') : (result.output || '(sin output)');
 
@@ -444,8 +455,8 @@ async function handleApi(req, res, pathname) {
     return;
   }
 
-  // POST /api/wsl/start | /api/wsl/stop | /api/wsl/logs
-  const wslMatch = pathname.match(/^\/api\/wsl\/(start|stop|logs)$/);
+  // POST /api/wsl/start | /api/wsl/stop | /api/wsl/logs | /api/wsl/install
+  const wslMatch = pathname.match(/^\/api\/wsl\/(start|stop|logs|install)$/);
   if (wslMatch && req.method === 'POST') {
     const body = await readBody(req);
     const { statusCode, payload } = await handleWslAction(wslMatch[1], body);
