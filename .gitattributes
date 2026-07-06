@@ -1,0 +1,22 @@
+# Normalización de fin de línea — crítico para wsl-labs.
+# Los scripts .sh se ejecutan DENTRO de WSL: deben conservar LF siempre,
+# aunque el repo se clone en Windows.
+* text=auto eol=lf
+
+*.sh    text eol=lf
+*.bash  text eol=lf
+Makefile text eol=lf
+
+# Scripts de Windows: CRLF nativo.
+*.ps1   text eol=crlf
+*.bat   text eol=crlf
+*.cmd   text eol=crlf
+
+# Binarios / assets: sin conversión.
+*.png   binary
+*.jpg   binary
+*.ico   binary
+*.exe   binary
+*.tar   binary
+*.gz    binary
+*.vhdx  binary
