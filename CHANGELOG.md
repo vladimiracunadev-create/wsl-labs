@@ -7,6 +7,47 @@ el proyecto adopta [versionado semántico](https://semver.org/lang/es/).
 
 ---
 
+## [0.3.0] - 2026-07-06
+
+**Giro completo: wsl-labs es ahora una plataforma de contenedores (WSL Container Center).**
+
+El repo deja de girar en torno a *servicios en la distro* y pasa a **levantar y
+controlar contenedores con `wslc`**, como `docker-labs` pero con el motor nativo de
+WSL. WSL queda como **documentación de contexto**.
+
+### Changed
+
+- 🐳 **Panel reconvertido a control de contenedores.** Endpoints
+  `GET /api/wslc/overview` y `POST /api/wslc/{build,up,down,logs}`. Backend Node
+  reescrito, sólo `wslc` (se retiró el código de servicios, `wsl -u root` y keepalive).
+
+### Added
+
+- 📦 **12 casos de contenedores** portados de `docker-labs`, cada uno en
+  `containers/NN-*` con Dockerfile propio o imagen pública, y catálogo
+  `containers/containers.config.json`: node-api, php-lamp, python-api, redis-cache,
+  postgres-api, nginx-web, rabbitmq, prometheus-grafana, multi-service, go-api,
+  elasticsearch, jenkins. Multi-contenedor + redes `wslc` para los `platform`/`infra`.
+- 🧭 Panel container-first (Construir/Levantar/Bajar/Logs por caso); detección de `wslc`.
+
+### Removed
+
+- 🗑️ Labs de servicios, `labs.config.json`, `examples/` y scripts de instalación
+  WSL (`install-*.sh`, `setup-passwordless-sudo.sh`, `doctor.sh`, backup/restore).
+  La documentación de WSL (historia, comandos, cheatsheets) se conserva.
+
+### Verified
+
+- ✅ **Los 12 casos desplegados y verificados** con `wslc`: HTTP 200/302/403 desde
+  Windows; las apps `platform` reportan su base de datos `reachable` (Redis,
+  PostgreSQL, MariaDB, MongoDB) por la red `wslc`; Elasticsearch devuelve el cluster
+  real y Jenkins responde. Panel: **12/12 corriendo**.
+
+> [!NOTE]
+> Requiere WSL **2.9+** con `wslc` (preview): `wsl --update --pre-release`.
+
+---
+
 ## [0.2.0] - 2026-07-06
 
 **Track de contenedores WSLC — imágenes reales, no solo servicios.**

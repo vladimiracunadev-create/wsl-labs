@@ -13,7 +13,7 @@ on:
       - 'index.html'
       - 'dashboard.css'
       - 'dashboard.js'
-      - 'labs.config.json'
+      - 'containers/**'
       - '.github/workflows/dashboard.yml'
   pull_request:
     paths:
@@ -21,7 +21,7 @@ on:
       - 'index.html'
       - 'dashboard.css'
       - 'dashboard.js'
-      - 'labs.config.json'
+      - 'containers/**'
       - '.github/workflows/dashboard.yml'
   workflow_dispatch:
 

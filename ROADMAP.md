@@ -1,45 +1,45 @@
-# 🗺️ ROADMAP — WSL Control Center
+# 🗺️ ROADMAP — WSL Container Center
 
 > Historial de versiones y features planeadas.
 > Para el estado actual del repo, consulta el [PROJECT_STATUS.md](PROJECT_STATUS.md).
 
 ---
 
-## ✅ v0.1 — Control Center inicial _(actual)_
+## ✅ v0.3 — 12 casos de contenedores con WSLC _(actual)_
 
-[![v0.1](https://img.shields.io/badge/v0.1-actual-brightgreen)](PROJECT_STATUS.md)
+[![v0.3](https://img.shields.io/badge/v0.3-actual-brightgreen)](PROJECT_STATUS.md)
 
-- [x] README con identidad visual (badges, Mermaid, tablas)
-- [x] Control Center Node.js en `localhost:9092`
-- [x] UI web (`index.html` + `dashboard.css` + `dashboard.js`)
+- [x] Panel Node.js en `localhost:9092` con endpoints `wslc`
+      (`GET /api/wslc/overview`, `POST /api/wslc/{build,up,down,logs}`)
+- [x] Motor **WSLC** integrado (`C:\Program Files\WSL\wslc.exe`, WSL 2.9+ preview)
+- [x] **12 casos** portados de `docker-labs`, verificados corriendo con `wslc`
+- [x] 4 starter + 4 platform (red `wslc`) + 4 infra
+- [x] Imágenes custom con `wslc build` desde Dockerfiles (incluye multi-stage)
+- [x] Catálogo `containers/containers.config.json` como fuente única de verdad
 - [x] Launcher Go (`.exe`) con autodetección de distro
-- [x] Catálogo `labs.config.json` como fuente única de verdad
-- [x] 12 labs normalizados (6 servicios + 6 aprendizaje)
 - [x] CI/CD en GitHub Actions
-- [x] Suite documental por audiencia (español)
 - [x] Licencia Apache-2.0
 
 ---
 
-## ⏳ v0.2 — Más labs de servicio
+## ⏳ v0.4 — Más casos y persistencia
 
-[![v0.2](https://img.shields.io/badge/v0.2-planificado-yellow)](CONTRIBUTING.md)
+[![v0.4](https://img.shields.io/badge/v0.4-planificado-yellow)](CONTRIBUTING.md)
 
-- [ ] 🔐 **Servidor SSH** en WSL (`ssh://localhost:2222`)
-- [ ] 🐬 **MySQL / MariaDB** en WSL (`:3306`)
-- [ ] 🐳 **Docker-in-WSL** — correr Docker Engine dentro de la distro
-- [ ] Capturas y evidencias del flujo completo
-- [ ] Instalador `.exe` publicado por CI al taggear `v*.*.*`
+- [ ] 🧪 **Más casos de contenedores** (colas adicionales, otras bases, gateways)
+- [ ] 💾 **Volúmenes persistentes** por caso (`wslc volume`) para datos que sobreviven al `down`
+- [ ] 🩺 **Healthchecks avanzados** (readiness, reintentos, umbrales por servicio)
+- [ ] 🖼️ Capturas y evidencias del panel operando los casos
 
 ---
 
-## 🔮 v0.3 — Benchmarks WSL vs Docker vs VM
+## 🔮 v0.5 — Orquestación multi-contenedor
 
-[![v0.3](https://img.shields.io/badge/v0.3-planificado-blue)](docs/03-wsl-vs-docker-vs-vm.md)
+[![v0.5](https://img.shields.io/badge/v0.5-planificado-blue)](docs/wslc-contenedores.md)
 
-- [ ] 📊 Benchmark reproducible: boot time, memoria, I/O
-- [ ] Tabla comparativa **WSL2 vs Docker vs VM** con datos reales
-- [ ] Dataset de benchmarks versionado en el repo
+- [ ] 🧩 **`wslc-compose`** si Microsoft lo publica — hoy el multi-contenedor se arma
+      a mano con red `wslc` + varios `wslc run`
+- [ ] 📊 Benchmark reproducible: `wslc` vs Docker (boot time, memoria, I/O)
 - [ ] Comparación directa con `docker-labs` y `unikernel-labs`
 - [ ] Demo grabada del recorrido completo
 
@@ -49,12 +49,12 @@
 
 | Principio | Descripción |
 | --- | --- |
-| 🎯 Honestidad técnica | No prometer runtime Windows nativo donde no corresponde |
-| 🪟 Windows es la UX | El modo de interacción principal sigue siendo Windows |
-| 🐧 Linux es el runtime | WSL2 + servicios Linux reales siempre en el backend |
-| 📇 Un catálogo raíz | `labs.config.json` controla puertos, comandos y health |
-| ⚖️ Paridad con la línea | Misma arquitectura que `docker-labs` y `unikernel-labs` |
+| 🎯 Honestidad técnica | Se documenta que `wslc` está en preview y qué se verificó de verdad |
+| 🪟 Windows es la UX | El modo de interacción principal sigue siendo Windows (panel + launcher) |
+| 🐳 Contenedores reales | Imágenes OCI y contenedores `wslc`, no emulación ni demonios `apt` |
+| 📇 Un catálogo raíz | `containers/containers.config.json` controla imágenes, puertos, redes y health |
+| ⚖️ Paridad con la línea | Mismos casos que `docker-labs`, con el motor nativo de WSL |
 
 ---
 
-📖 Ver también: [PROJECT_STATUS.md](PROJECT_STATUS.md) · [CONTRIBUTING.md](CONTRIBUTING.md) · [RECRUITER.md](RECRUITER.md)
+📖 Ver también: [PROJECT_STATUS.md](PROJECT_STATUS.md) · [docs/wslc-contenedores.md](docs/wslc-contenedores.md) · [RECRUITER.md](RECRUITER.md)

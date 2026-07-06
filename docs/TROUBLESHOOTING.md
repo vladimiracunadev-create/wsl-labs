@@ -1,121 +1,149 @@
-# 🧯 Resolución de problemas — wsl-labs
+# 🧯 Resolución de problemas — WSL Container Center
 
-> Problemas comunes al operar el Control Center y los servicios WSL, en formato
+> Problemas comunes al operar el panel y los casos de contenedores, en formato
 > **problema → causa → solución**.
-> Para el registro de lecciones estructurales, ver el lab
-> [`12-troubleshooting`](../labs/12-troubleshooting/) y los
+> Para conceptos de contenedores WSLC, ver el
+> [Track de contenedores WSLC](wslc-contenedores.md) y los
 > [cheatsheets](../cheatsheets/troubleshooting.md).
 
 ## 🗺️ Esquema
 
 ```mermaid
 flowchart TD
-    Q1{"¿WSL arranca?<br/>wsl -l -v"}
-    Q1 -->|No| S1["wsl --install · set-version 2<br/>activar virtualización BIOS"]
-    Q1 -->|Sí| Q2{"¿Servicio instalado?"}
-    Q2 -->|No| S2["📦 Instalar en el panel"]
-    Q2 -->|Sí| Q3{"¿Puerto escucha?<br/>ss -tlnp"}
-    Q3 -->|No| S3["▶ Levantar · revisar systemd y logs"]
+    Q1{"¿wslc disponible?<br/>wslc version"}
+    Q1 -->|No| S1["wsl --update --pre-release<br/>· activar virtualización BIOS"]
+    Q1 -->|Sí| Q2{"¿Imagen construida?<br/>(caso custom)"}
+    Q2 -->|No| S2["📦 Construir en el panel"]
+    Q2 -->|Sí| Q3{"¿Contenedor corriendo?<br/>wslc list"}
+    Q3 -->|No| S3["▶ Levantar · revisar 📄 Logs"]
     Q3 -->|Sí| Q4{"¿localhost responde?"}
-    Q4 -->|No| S4["Puerto ocupado en Windows<br/>netstat -ano findstr"]
-    Q4 -->|Sí| OK["✅ healthy"]
+    Q4 -->|No| S4["Puerto ocupado en Windows<br/>netstat -ano findstr · o esperar arranque"]
+    Q4 -->|Sí| OK["✅ running"]
 ```
 
 ---
 
-## 🐧 WSL no arranca
+## 🚫 `wslc` no está instalado
 
-**Problema:** `wsl --status` o `wsl -l -v` fallan, o la distro no abre.
+**Problema:** el panel muestra los casos como **unavailable** o el overview responde
+`available: false`.
 
-**Causa:** WSL2 no habilitado, virtualización desactivada en BIOS, o la distro
-en versión 1.
+**Causa:** `wslc` (el motor de contenedores de WSL) no está presente. Llega con la
+versión **preview** de WSL 2.9+.
 
 **Solución:**
 
 ```powershell
-wsl --status              # ¿WSL en modo 2?
-wsl -l -v                 # ¿tu distro con VERSION 2?
+wsl --update --pre-release
+wsl --shutdown
+& "C:\Program Files\WSL\wslc.exe" version
 ```
 
-- Si la distro está en **VERSION 1**: `wsl --set-version Ubuntu 2`.
-- Si WSL no está instalado: `wsl --install` y reinicia.
+- Si el binario está en otra ruta, apúntalo con `WSL_LABS_WSLC` antes de arrancar el panel.
 - Habilita en BIOS/UEFI la **virtualización** (VT-x / AMD-V) y en Windows la
-  característica **"Plataforma de máquina virtual"**.
+  característica **"Plataforma de máquina virtual"** (requisito de WSL 2).
+
+---
+
+## 📦 Imagen sin construir
+
+**Problema:** un caso custom (starter, `06`, `10`) aparece como **missing / Imagen
+sin construir** y no levanta.
+
+**Causa:** la imagen del caso todavía no existe en `wslc images`.
+
+**Solución:**
+
+1. Pulsa **📦 Construir** en la tarjeta del caso (`POST /api/wslc/build`).
+2. Espera a `[build <imagen>] OK` en la salida. La primera vez descarga la imagen base.
+3. Verifica a mano si hace falta:
+
+```powershell
+& "C:\Program Files\WSL\wslc.exe" images
+```
 
 ---
 
 ## 🔌 Puerto ocupado
 
-**Problema:** un servicio queda **degraded** o **stopped**, o el panel no
-levanta en `:9092`.
+**Problema:** un caso queda **degraded** / no arranca, o el panel no levanta en `:9092`.
 
-**Causa:** otro proceso de Windows ya usa ese puerto (8080, 8082, 9092…).
+**Causa:** otro proceso de Windows ya usa ese puerto (8101, 8104, 9092…).
 
 **Solución:**
 
 ```powershell
-netstat -ano | findstr 8080      # ¿quién usa el puerto?
+netstat -ano | findstr 8101      # ¿quién usa el puerto?
 tasklist | findstr <PID>          # identifica el proceso
 ```
 
-Cierra el proceso que ocupa el puerto, o cambia el puerto del servicio en
-[`labs.config.json`](../labs.config.json) de forma consciente. Ver la tabla de
-puertos en [Requisitos](REQUIREMENTS.md#-puertos).
+Cierra el proceso que ocupa el puerto, o cambia el puerto del caso en
+[`containers/containers.config.json`](../containers/containers.config.json) de forma
+consciente (campo `port` y el mapeo `ports` del contenedor). Ver la tabla de puertos
+en [Requisitos](REQUIREMENTS.md#-puertos).
 
 ---
 
-## ⚙️ Un servicio no levanta
+## ⚙️ Un contenedor no arranca
 
-**Problema:** pulsas **▶ Levantar** y el servicio no pasa a **healthy**.
+**Problema:** pulsas **▶ Levantar** y el caso no pasa a **running**.
 
-**Causa:** no está instalado, systemd no está activo, o el paquete falló al
-instalarse.
+**Causa:** la imagen no está construida, el puerto está ocupado, o el contenedor
+falla al iniciarse.
 
 **Solución:**
 
-1. Si el estado es **📦 No instalado**, pulsa **📦 Instalar** primero
-   (`install-*.sh` como root, idempotente).
-2. Revisa **📄 Logs** en la tarjeta del servicio (`POST /api/wsl/logs`).
-3. Prueba a mano dentro de WSL:
+1. Si el estado es **📦 Imagen sin construir**, pulsa **📦 Construir** primero.
+2. Revisa **📄 Logs** en la tarjeta del caso (`POST /api/wslc/logs`).
+3. Inspecciona a mano:
 
 ```powershell
-wsl -d Ubuntu -- bash -lc "service nginx status"
-wsl -d Ubuntu -- bash -lc "systemctl status wsl-labs-node --no-pager"
+& "C:\Program Files\WSL\wslc.exe" list
+& "C:\Program Files\WSL\wslc.exe" logs wslc-node-api
 ```
 
-1. Reinstala si hace falta (es idempotente):
-
-```powershell
-wsl bash scripts/install-nginx.sh
-```
+1. Vuelve a **▶ Levantar**: es idempotente (hace `stop` + `rm` del contenedor previo
+   con el mismo nombre antes de recrearlo).
 
 ---
 
-## ⚙️ systemd no activo (node / flask no arrancan)
+## 🕸️ Multi-contenedor sin red
 
-**Problema:** los servicios `07 node` y `08 flask` no levantan; los servicios
-`service` (nginx/apache/postgres) sí.
+**Problema:** un caso multi-contenedor (LAMP, redis, postgres, mongo, observabilidad)
+levanta, pero la app no ve a su base de datos / dependencia.
 
-**Causa:** `node` y `flask` son **unidades systemd** (`wsl-labs-node`,
-`wsl-labs-flask`). Si systemd no está habilitado en la distro, `systemctl` falla.
+**Causa:** los contenedores se comunican por **nombre** a través de una **red wslc**
+dedicada. Si la red no existe, no se resuelven entre sí.
 
-**Solución:** habilita systemd en `/etc/wsl.conf` dentro de WSL:
-
-```ini
-[boot]
-systemd=true
-```
-
-Luego, desde Windows:
+**Solución:** desde el panel, **▶ Levantar** crea la red automáticamente
+(`wslc network create <red>`) antes de lanzar los contenedores. Si operas a mano,
+créala tú y usa `--network`:
 
 ```powershell
-wsl --shutdown
-wsl -d Ubuntu -- bash -lc "systemctl is-system-running"
+& "C:\Program Files\WSL\wslc.exe" network create wslc-pg-net
+& "C:\Program Files\WSL\wslc.exe" network ls
 ```
 
-> [!NOTE]
-> Los servicios `service` (nginx/apache/postgres) usan `service <x> start` y no
-> dependen de systemd, por eso pueden funcionar aunque systemd esté apagado.
+El nombre de la red y las variables como `PG_HOST=wslc-postgres` vienen en el campo
+`network` y `containers[].env` del caso en el catálogo.
+
+---
+
+## 🐢 Elasticsearch / Jenkins tardan
+
+**Problema:** `11` Elasticsearch o `12` Jenkins quedan **degraded** un buen rato tras
+levantarlos.
+
+**Causa:** son casos **infra** pesados: la JVM y la inicialización interna tardan más
+que un starter. Elasticsearch necesita memoria (`ES_JAVA_OPTS=-Xms512m -Xmx512m`).
+
+**Solución:**
+
+- Dales tiempo: refresca el panel varias veces; pasarán a **running** cuando el
+  servicio interno esté listo.
+- Comprueba el avance en **📄 Logs**.
+- Asegúrate de tener **RAM suficiente** (ver [Requisitos](REQUIREMENTS.md)); con la
+  máquina saturada, tardan más o fallan.
 
 ---
 
@@ -123,120 +151,64 @@ wsl -d Ubuntu -- bash -lc "systemctl is-system-running"
 
 **Problema:** `http://localhost:9092` no abre o la API no responde.
 
-**Causa:** el Control Center no está corriendo, o Node.js no está en el PATH de
-Windows.
+**Causa:** el panel no está corriendo, o Node.js no está en el PATH de Windows.
 
 **Solución:**
 
 ```powershell
-node --version                       # ¿Node 18+ en Windows?
+node --version                              # ¿Node 18+ en Windows?
 cd C:\dev\wsl-labs
-node dashboard-server/server.js      # o: make serve
+node dashboard-server/server.js             # o: make serve
+Invoke-RestMethod http://localhost:9092/api/wslc/overview
 ```
 
-- Comprueba que responde: `Invoke-RestMethod http://localhost:9092/api/overview`.
 - Recuerda que escucha **solo en `127.0.0.1`** (no en la red, por diseño).
-- Si activaste `WSL_LABS_TOKEN`, añade el header
-  `Authorization: Bearer <token>` a las llamadas `/api`.
+- Si activaste `WSL_LABS_TOKEN`, añade el header `Authorization: Bearer <token>` a las
+  llamadas `/api`.
 
 ---
 
-## 💓 La instancia WSL se apaga sola (keepalive)
+## ⚠️ Un caso queda "degraded"
 
-**Problema:** levantas servicios y al rato "desaparecen" o dejan de responder.
+**Problema:** el estado es **degraded** ⚠️ (contenedor arriba, pero aún no responde
+en el puerto).
 
-**Causa:** WSL se apaga por inactividad y tira abajo los servicios.
-
-**Solución:** mantén el **Control Center abierto**: mientras corre, el
-**keepalive** mantiene viva la instancia WSL (como Docker Desktop con su VM).
-
-- Con el panel abierto → WSL sigue viva.
-- Si cerraste el panel → vuelve a abrirlo; los servicios `service` están
-  `enabled` y los `systemd` (`node`, `flask`) rearrancan solos en el siguiente boot.
-
----
-
-## 🔑 sudo / root
-
-**Problema:** operando por **terminal** (`make up-*`), `sudo` pide contraseña y
-el arranque se cuelga.
-
-**Causa:** el flujo de terminal usa `sudo service …` como tu propio usuario.
+**Causa:** el proceso interno del contenedor todavía está arrancando, o su config falla.
 
 **Solución:**
 
-- **Desde el panel no aplica**: el Control Center corre como `root`
-  (`wsl.exe -u root`), sin contraseña. Usa el panel.
-- Para el flujo de terminal, configura passwordless sudo:
-
-```powershell
-wsl bash scripts/setup-passwordless-sudo.sh
-```
-
-> [!IMPORTANT]
-> `setup-passwordless-sudo.sh` **no** es necesario para el panel. Solo sirve al
-> flujo `make up-*` por terminal. Ver [COMPATIBILITY.md](../COMPATIBILITY.md).
-
----
-
-## 📦 El panel dice "No instalado" aunque instalé
-
-**Problema:** un servicio muestra **No instalado** pese a haberlo instalado.
-
-**Causa:** sonda de binarios lenta o realizada antes de terminar la instalación.
-
-**Solución:** refresca el panel. La detección **cachea y acumula positivos**: una
-vez detectado como instalado, no vuelve a marcarse "No instalado". Si persiste,
-verifica el binario dentro de WSL:
-
-```powershell
-wsl -d Ubuntu -- bash -lc "command -v nginx || echo NO"
-```
-
----
-
-## ⚠️ Un servicio queda "degraded"
-
-**Problema:** el estado es **degraded** ⚠️ (puerto abierto, pero HTTP da error).
-
-**Causa:** el servicio arrancó pero su config o backend fallan.
-
-**Solución:**
-
-1. Revisa **📄 Logs** del servicio.
-2. Para el mini-servidor (11), valida el vhost nginx:
-
-```powershell
-wsl -d Ubuntu -u root -- bash -lc "nginx -t"
-```
-
-1. Reinstala/relevanta si la config quedó a medias.
+1. Espera unos segundos y **refresca** el panel: casos recién levantados pasan de
+   `degraded` a `running` cuando el proceso interno acepta conexiones.
+2. Si persiste, revisa **📄 Logs** del contenedor.
+3. **⏹ Bajar** y volver a **▶ Levantar** si la config quedó a medias.
 
 ---
 
 ## 🧹 Reinicio limpio
 
-**Problema:** varios servicios en estado inconsistente y quieres empezar de cero.
+**Problema:** varios casos en estado inconsistente y quieres empezar de cero.
 
-**Solución:**
+**Solución:** baja los casos desde el panel (**⏹ Bajar** en cada uno), o a mano:
 
 ```powershell
-wsl --shutdown                       # detiene TODAS las distros y servicios
+& "C:\Program Files\WSL\wslc.exe" list                # ver qué corre
+& "C:\Program Files\WSL\wslc.exe" stop <contenedor>
+& "C:\Program Files\WSL\wslc.exe" rm   <contenedor>
 ```
 
-> [!WARNING]
-> `wsl --shutdown` para **todos** los servicios en marcha. Úsalo para un arranque
-> limpio, no en medio de una demo. Luego vuelve a abrir el panel y levanta lo que
-> necesites.
+> [!NOTE]
+> Bajar un caso **elimina sus contenedores pero conserva la imagen** en
+> `wslc images`. Relanzar es rápido y no requiere reconstruir.
 
 ---
 
 ## 🔗 Documentos relacionados
 
 - [Manual de usuario](USER_MANUAL.md)
-- [Setup del Control Center](DASHBOARD_SETUP.md)
+- [Setup del panel](DASHBOARD_SETUP.md)
 - [Requisitos](REQUIREMENTS.md)
 - [Instalación completa](INSTALL.md)
+- [Track de contenedores WSLC](wslc-contenedores.md)
 - [RUNBOOK operativo](../RUNBOOK.md)
 - [COMPATIBILITY.md](../COMPATIBILITY.md)
 - [Cheatsheet de troubleshooting](../cheatsheets/troubleshooting.md)

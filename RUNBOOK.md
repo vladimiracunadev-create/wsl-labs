@@ -1,27 +1,28 @@
-# 🛠️ RUNBOOK — WSL Control Center v1
+# 🛠️ RUNBOOK — WSL Container Center
 
-> Guía operativa del día a día para levantar, monitorear y detener servicios
-> Linux sobre WSL2 desde Windows.
+> Guía operativa del día a día para construir, levantar, monitorear y bajar
+> **contenedores** con `wslc` desde Windows.
 > Para el setup inicial, consulta [ENVIRONMENT_SETUP.md](ENVIRONMENT_SETUP.md).
 
 ---
 
-## 🩺 1 · Validar WSL antes de operar
+## 🩺 1 · Validar el motor antes de operar
 
 ```powershell
-wsl --status
-wsl -l -v
+wsl --version
+& "C:\Program Files\WSL\wslc.exe" version
+node --version
 ```
 
 Debes ver:
 
-- ✅ WSL en modo **2** por defecto
-- ✅ Tu distro (`Ubuntu`) con `VERSION 2`
-- ✅ `node --version` responde en Windows (≥ 18)
+- ✅ WSL en versión **2.9+** (si no, `wsl --update --pre-release`)
+- ✅ `wslc version` responde (motor de contenedores disponible)
+- ✅ `node --version` ≥ 18 en Windows
 
 ---
 
-## 🖥️ 2 · Levantar el Control Center
+## 🖥️ 2 · Levantar el panel
 
 ```powershell
 cd C:\dev\wsl-labs
@@ -38,174 +39,158 @@ Abre → **<http://localhost:9092>**
 
 ---
 
-## 🧰 2.5 · Puesta a punto inicial (una vez por distro)
+## ▶️ 3 · Construir, levantar y bajar casos
 
 El flujo recomendado es **100 % desde el panel**, sin contraseñas y sin terminal.
-El Control Center ejecuta los comandos dentro de WSL **como `root`** vía
-`wsl.exe -d Ubuntu -u root -- …` (Windows ya autenticó al usuario), igual que
-Docker corre privilegiado. Por eso **no** se pide contraseña nunca.
+El panel ejecuta `wslc.exe` en Windows (Windows ya autenticó al usuario), así que
+**nunca pide contraseña**.
 
 ```text
 1. Abre  →  http://localhost:9092
-2. Pulsa 📦 Instalar   → corre el install-script del servicio como root
-3. Pulsa ▶ Levantar    → arranca el servicio (healthy)
-```
-
-Eso es todo: cada servicio se instala y se levanta con un clic, como en Docker.
-
-> [!NOTE]
-> El botón **📦 Instalar** llama al endpoint `POST /api/wsl/install`, que ejecuta
-> el `install-*.sh` correspondiente como `root`. Los `install-*.sh` son
-> **idempotentes**: puedes re-instalar sin miedo. Cada uno imprime al final
-> `[wsl-labs] <servicio> OK en :<puerto>` o el fallo.
-
-### 🖥️ Alternativa: `make up-*` por terminal (opcional)
-
-Solo si prefieres operar desde una terminal **como tu propio usuario** (no vía el
-panel) necesitas `sudo` sin contraseña, porque los targets `make up-*` usan
-`sudo service …`:
-
-```powershell
-# (1) Herramientas base (curl, git, utilidades) — idempotente
-wsl bash scripts/install-base.sh
-
-# (2) Instalar el/los servicio(s) que vayas a usar — idempotentes
-wsl bash scripts/install-nginx.sh        # nginx en :8080
-wsl bash scripts/install-apache-php.sh   # apache + php en :8081
-wsl bash scripts/install-postgresql.sh   # postgresql en :5432
-wsl bash scripts/install-node.sh         # node (API en :8082)
-wsl bash scripts/install-python.sh       # python + flask (app en :8083)
-
-# (3) Passwordless sudo — SOLO para uso por terminal como tu usuario
-wsl bash scripts/setup-passwordless-sudo.sh
-
-# (4) Levantar servicios por terminal
-make up-nginx        # etc.
+2. Pulsa 🔨 Construir  → construye la imagen del caso (solo si tiene Dockerfile)
+3. Pulsa ▶ Levantar    → crea la red (si aplica) y arranca los contenedores
+4. Pulsa 📄 Logs / 🛑 Bajar según lo necesites
 ```
 
 > [!NOTE]
-> `setup-passwordless-sudo.sh` **ya no es necesario para el panel** (el panel usa
-> `-u root`). Solo aplica a este flujo de terminal con `make up-*`.
+> Los casos que usan imágenes oficiales (RabbitMQ, Prometheus/Grafana,
+> Elasticsearch, Jenkins) **no necesitan Construir**: pulsa directamente
+> **Levantar**.
 
----
+### Por API (modo dev, sin token)
 
-## ▶️ 3 · Levantar / bajar servicios
-
-Cada servicio se identifica por su `id` del catálogo. Desde la API (modo dev,
-sin token):
+Cada caso se identifica por su `id` del catálogo:
 
 ```powershell
 $h = @{ 'Content-Type' = 'application/json' }
 
-# Levantar nginx (lab 05)
-Invoke-RestMethod -Method Post -Headers $h -Body '{ "id": "05" }' http://localhost:9092/api/wsl/start
+# Construir la imagen del caso 01
+Invoke-RestMethod -Method Post -Headers $h -Body '{ "id": "01" }' http://localhost:9092/api/wslc/build
 
-# Detener nginx (lab 05)
-Invoke-RestMethod -Method Post -Headers $h -Body '{ "id": "05" }' http://localhost:9092/api/wsl/stop
+# Levantar el caso 01
+Invoke-RestMethod -Method Post -Headers $h -Body '{ "id": "01" }' http://localhost:9092/api/wslc/up
 
-# Ver logs de nginx (lab 05)
-Invoke-RestMethod -Method Post -Headers $h -Body '{ "id": "05" }' http://localhost:9092/api/wsl/logs
+# Ver logs del caso 01
+Invoke-RestMethod -Method Post -Headers $h -Body '{ "id": "01" }' http://localhost:9092/api/wslc/logs
+
+# Bajar el caso 01
+Invoke-RestMethod -Method Post -Headers $h -Body '{ "id": "01" }' http://localhost:9092/api/wslc/down
 ```
-
-También puedes hacerlo con un clic desde la UI del Control Center.
 
 > [!TIP]
 > Si activaste `WSL_LABS_TOKEN`, añade el header `Authorization: Bearer <token>`
 > a cada llamada `/api`.
+
+### Por terminal (`make build-*` / `wslc` directo)
+
+```powershell
+make build-node    # construye wsl-labs/node-api:latest
+& "C:\Program Files\WSL\wslc.exe" run -d --name wslc-node-api -p 8101:3000 wsl-labs/node-api:latest
+```
 
 ---
 
 ## ✅ 4 · Verificar salud
 
 ```powershell
-# Estado global de todos los labs
-Invoke-RestMethod http://localhost:9092/api/overview
+# Estado global de todos los casos
+Invoke-RestMethod http://localhost:9092/api/wslc/overview
 
-# Salud de un servicio concreto (lab 05)
-Invoke-RestMethod http://localhost:9092/api/health/05
-
-# Respuesta real del servicio
-Invoke-WebRequest http://localhost:8080 -UseBasicParsing
+# Respuesta real de un caso (p. ej. node-api en :8101)
+Invoke-WebRequest http://localhost:8101 -UseBasicParsing
 ```
-
-Estados que devuelve el Control Center:
-
-| Estado | Emoji | Significado |
-| --- | :---: | --- |
-| `healthy` | ✅ | Responde correctamente en su puerto |
-| `degraded` | ⚠️ | Puerto abierto pero HTTP da error |
-| `stopped` | ⏹ | Puerto cerrado / servicio abajo |
-| `n/a` | 📚 | Lab de aprendizaje (sin servicio) |
 
 ---
 
-## 📡 5 · Puertos y servicios
+## 📡 5 · Casos y puertos
 
-| Servicio | Lab | Puerto | URL | Health |
-| --- | :---: | ---: | --- | --- |
-| 🧭 Control Center | — | 9092 | <http://localhost:9092> | — |
-| 🌐 nginx | 05 | 8080 | <http://localhost:8080> | `http` |
-| 🐘 apache + php | 06 | 8081 | <http://localhost:8081> | `http` |
-| 🟢 node API | 07 | 8082 | <http://localhost:8082> | `http` |
-| 🐍 flask | 08 | 8083 | <http://localhost:8083> | `http` |
-| 🗄️ postgresql | 09 | 5432 | `postgres://localhost:5432` | `tcp` |
-| 🧱 mini-servidor | 11 | 8090 | <http://localhost:8090> | `http` |
+| Caso | id | Categoría | Puerto host | URL |
+| --- | :---: | --- | ---: | --- |
+| 🧭 Panel | — | — | 9092 | <http://localhost:9092> |
+| 🟢 API Node.js | 01 | starter | 8101 | <http://localhost:8101> |
+| 🐍 API Python (Flask) | 03 | starter | 8102 | <http://localhost:8102> |
+| 🐹 API Go | 10 | starter | 8103 | <http://localhost:8103> |
+| 🌐 Nginx web | 06 | starter | 8104 | <http://localhost:8104> |
+| 🔴 Cache Redis + app | 04 | platform | 8105 | <http://localhost:8105> |
+| 🐘 API + PostgreSQL | 05 | platform | 8106 | <http://localhost:8106> |
+| 🐬 LAMP (PHP + MariaDB) | 02 | platform | 8107 | <http://localhost:8107> |
+| 🐇 RabbitMQ | 07 | infra | 8109 | <http://localhost:8109> |
+| 📊 Prometheus + Grafana | 08 | infra | 8110 | <http://localhost:8110> |
+| 🍃 Multi-servicio (Mongo) | 09 | platform | 8112 | <http://localhost:8112> |
+| 🔎 Elasticsearch | 11 | infra | 8113 | <http://localhost:8113> |
+| 🔧 Jenkins CI | 12 | infra | 8114 | <http://localhost:8114> |
+
+> [!NOTE]
+> Los casos multi-contenedor (`04`, `05`, `02`, `09`, `08`) crean una **red
+> `wslc`** propia y conectan los contenedores por nombre.
 
 ---
 
-## ⚡ 6 · Comandos wsl.exe rápidos
-
-### Estado y distros
+## ⚡ 6 · Comandos `wslc` rápidos
 
 ```powershell
-wsl -l -v                 # distros y su versión WSL
-wsl --status              # estado general de WSL
-wsl -l -q                 # solo nombres (lo que usa el launcher)
+$wslc = "C:\Program Files\WSL\wslc.exe"
+
+# Contenedores e imágenes
+& $wslc list                 # contenedores (≈ docker ps)
+& $wslc images               # imágenes locales
+
+# Logs y ciclo de vida
+& $wslc logs wslc-node-api
+& $wslc stop wslc-node-api
+& $wslc rm wslc-node-api
+
+# Redes y volúmenes
+& $wslc network ls
+& $wslc volume ls
 ```
 
-### Operar servicios dentro de la distro
+Atajos con `make`:
 
 ```powershell
-# Estado de un servicio
-wsl -d Ubuntu -- bash -lc "service nginx status"
-
-# Arrancar / detener manualmente
-wsl -d Ubuntu -- sudo service nginx start
-wsl -d Ubuntu -- sudo service nginx stop
-
-# Ver puertos escuchando dentro de WSL
-wsl -d Ubuntu -- bash -lc "ss -tulpn"
+make ps        # wslc list
+make images    # wslc images
+make prune     # elimina contenedores parados + imágenes colgadas
 ```
 
-### Ciclo de vida de la distro
+---
+
+## 🧹 7 · Limpieza
 
 ```powershell
-wsl --shutdown            # apaga todas las distros (reset limpio)
-wsl -d Ubuntu             # abre una shell en la distro
+$wslc = "C:\Program Files\WSL\wslc.exe"
+
+# Bajar un caso concreto (desde el panel: botón 🛑 Bajar)
+& $wslc stop wslc-node-api; & $wslc rm wslc-node-api
+
+# Limpieza general
+make prune                   # contenedores parados + imágenes colgadas
+& $wslc network prune        # redes wslc sin usar
 ```
 
 > [!WARNING]
-> `wsl --shutdown` detiene **todos** los servicios en marcha. Úsalo cuando
-> quieras un arranque limpio, no en medio de una demo.
+> `make prune` elimina contenedores parados e imágenes colgadas. Si tienes un
+> caso pesado ya construido (Elasticsearch, Jenkins) y quieres conservar su
+> imagen, no la borres a mano.
 
 ---
 
-## 🚀 7 · Uso del launcher
+## 🚀 8 · Uso del launcher
 
-1. Ejecuta `wsl-labs-launcher.exe` (doble clic o desde PowerShell)
-2. El launcher **verifica WSL2** (`wsl.exe --status`) y detecta la distro
-3. **Localiza la raíz del repo** (directorio del `.exe` o variable `WSL_LABS_HOME`)
-4. **Arranca el Control Center** (`node dashboard-server/server.js`) en segundo plano
-5. Hace **polling a `/api/overview`** hasta 90 s
-6. **Abre el navegador** en `http://localhost:9092`
+1. Ejecuta `wsl-labs-launcher.exe` (doble clic o desde PowerShell).
+2. El launcher **verifica WSL** y localiza `wslc`.
+3. **Localiza la raíz del repo** (directorio del `.exe` o `WSL_LABS_HOME`).
+4. **Arranca el panel** (`node dashboard-server/server.js`) en segundo plano.
+5. Hace **polling a `/api/wslc/overview`**.
+6. **Abre el navegador** en `http://localhost:9092`.
 
 > [!NOTE]
-> Puedes cerrar la ventana del launcher: el Control Center sigue corriendo en
-> segundo plano.
+> Puedes cerrar la ventana del launcher: el panel sigue corriendo en segundo
+> plano.
 
 ---
 
-## 🧪 8 · Verificación automatizada
+## 🧪 9 · Verificación automatizada
 
 ```powershell
 # desde la raíz del repo
@@ -220,11 +205,11 @@ make test-dashboard
 
 | Capa | Responsabilidad |
 | --- | --- |
-| 🪟 Windows | Capa de UX (Control Center, launcher) |
-| 🐧 WSL2 | Capa técnica (servicios Linux, systemd/service, sudo) |
-| 🌐 localhost | Superficie de servicios expuestos |
-| 📇 `labs.config.json` | Fuente única de verdad del catálogo |
+| 🪟 Windows | Capa de UX (panel, launcher) y ejecución de `wslc.exe` |
+| 🐳 `wslc` | Motor de contenedores nativo de WSL (build/run/network) |
+| 🌐 localhost | Superficie de puertos host publicados por los contenedores |
+| 📇 `containers/containers.config.json` | Fuente única de verdad del catálogo |
 
 ---
 
-📖 Ver también: [ENVIRONMENT_SETUP.md](ENVIRONMENT_SETUP.md) · [CONTRIBUTING.md](CONTRIBUTING.md) · [cheatsheets/comandos-wsl.md](cheatsheets/comandos-wsl.md)
+📖 Ver también: [ENVIRONMENT_SETUP.md](ENVIRONMENT_SETUP.md) · [CONTRIBUTING.md](CONTRIBUTING.md) · [docs/wslc-contenedores.md](docs/wslc-contenedores.md)

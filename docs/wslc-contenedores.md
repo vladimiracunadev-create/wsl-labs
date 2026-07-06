@@ -1,45 +1,46 @@
-# 🐳 Track de Contenedores WSLC
+# 🐳 Guía de contenedores con WSLC
 
-> Guía del **segundo track** de `wsl-labs`: imágenes y contenedores **reales** con
-> `wslc`, el motor de contenedores nativo de WSL. Complementa (no reemplaza) al
-> [track clásico de servicios](../README.md) que corre demonios dentro de la distro
-> Ubuntu.
+> Guía general del enfoque de **WSL Container Center**: qué es `wslc`, cómo se usan
+> los 12 casos del catálogo y cómo se traducen los comandos `wslc` ↔ `docker`.
+> Para el estado del proyecto consulta el [PROJECT_STATUS.md](../PROJECT_STATUS.md).
 
 ---
 
 ## 📖 ¿Qué es WSLC?
 
-**WSLC** es el motor de contenedores nativo que Microsoft añadió a WSL (a partir de
-**WSL 2.9.3+**). Se maneja con el comando `wslc` (ejecutable en
+**WSLC** es el motor de contenedores **nativo** que Microsoft integró en WSL (a
+partir de **WSL 2.9+**). Se maneja con el comando `wslc` (ejecutable en
 `C:\Program Files\WSL\wslc.exe`) y su interfaz es casi idéntica a la de Docker:
-`wslc build / run / pull / images / list / logs / stop / rm / volume / network`.
+`wslc build / up / down / pull / images / list / logs / network`.
 
-A diferencia del track clásico, WSLC construye **imágenes OCI reales por capas** a
-partir de un `Dockerfile` (`FROM nginx:alpine`, `FROM node:20-alpine`, …). **No**
-instala paquetes con `apt` dentro de la distro: levanta contenedores aislados y
-efímeros, como cualquier runtime de contenedores.
+WSLC construye **imágenes OCI reales por capas** a partir de un `Dockerfile`
+(`FROM nginx:alpine`, `FROM node:20-alpine`, …) y levanta **contenedores aislados**
+con red y filesystem propios — igual que cualquier runtime de contenedores. No hay
+demonios `apt` dentro de la distro: cada caso es una imagen y uno o varios
+contenedores que se crean y se descartan.
 
 > [!NOTE]
 > WSLC está en **preview**. Requiere WSL **2.9+** con el componente de contenedores
-> habilitado. Si `wslc` no existe en tu máquina, se obtiene con
-> `wsl --update --pre-release`.
+> habilitado. Si `wslc` no existe en tu máquina, se obtiene con:
+>
+> ```powershell
+> wsl --update --pre-release
+> ```
 
-### 🆚 WSLC vs. el track de servicios
+### 🆚 `wslc` frente a Docker
 
-| Aspecto | 🐳 Contenedores (WSLC) | ⚙️ Servicios (track clásico) |
+| Aspecto | 🐳 WSLC | 🐋 Docker |
 | --- | --- | --- |
-| Unidad de despliegue | **Contenedor** desde una **imagen** OCI | **Demonio** dentro de la distro Ubuntu |
-| Cómo se construye | `wslc build` desde un `Dockerfile` (`FROM …`) | `apt install` + configuración en la distro |
-| Ciclo de vida | **Efímero** (se crea y se descarta) | **Persistente** (vive en la instancia WSL) |
-| Aislamiento | Alto — filesystem y red propios del contenedor | Comparte el filesystem de la distro |
-| Puertos | **8091 – 8093** | **8080 – 8090** |
-| Ejecución | `wslc run -d -p …` | `wsl -u root` → `service`/`systemctl` |
-| Analogía | `docker` nativo dentro de WSL | Servidor Linux "de sistema" tradicional |
+| Motor | Nativo de WSL 2.9+ (preview) | Docker Engine / Docker Desktop |
+| Ejecutable | `C:\Program Files\WSL\wslc.exe` | `docker` |
+| Imágenes | OCI reales por capas desde `Dockerfile` | OCI reales por capas desde `Dockerfile` |
+| Multi-contenedor | Contenedores + **red `wslc`** | `docker compose` |
+| Puertos | `-p host:container` | `-p host:container` |
+| Instalación | Ya viene con WSL preview | Requiere instalar Docker Desktop |
 
 > [!TIP]
-> Los dos tracks son **complementarios**. Usa WSLC cuando quieras una imagen
-> reproducible y aislada; usa el track de servicios cuando quieras un demonio
-> Linux persistente integrado en tu distro.
+> Si sabes Docker, sabes WSLC. El modelo mental —imagen, contenedor, red, puerto—
+> es el mismo; cambia el binario y que el motor viene incluido en WSL.
 
 ---
 
@@ -47,11 +48,11 @@ efímeros, como cualquier runtime de contenedores.
 
 ```mermaid
 flowchart LR
-    D["Dockerfile\n(FROM alpine)"] --> B["wslc build\n-t imagen:latest"]
+    D["Dockerfile\n(FROM alpine)"] --> B["wslc build"]
     B --> I["imagen OCI\n(capas)"]
-    I --> R["wslc run -d\n-p 8091:80"]
-    R --> C["contenedor\nwsl-labs-nginx"]
-    C --> PT["puerto\n:8091"]
+    I --> U["wslc run\n-p 8104:80"]
+    U --> C["contenedor\nwslc-nginx-web"]
+    C --> PT["puerto\n:8104"]
     PT --> NAV["navegador\nWindows"]
 ```
 
@@ -80,128 +81,96 @@ wsl --version
 
 > [!WARNING]
 > Si `wslc` no aparece tras actualizar, reinicia WSL con `wsl --shutdown` y vuelve
-> a comprobarlo. El track de contenedores del Control Center localiza el binario
-> en `C:\Program Files\WSL\wslc.exe`; si tu instalación lo tiene en otra ruta, ese
-> panel no encontrará el motor.
+> a comprobarlo. El panel localiza el binario en `C:\Program Files\WSL\wslc.exe`;
+> si tu instalación lo tiene en otra ruta, no encontrará el motor.
 
 ---
 
-## 📦 Las 3 imágenes del track
+## 📦 Cómo se usan los 12 casos
 
-Las tres imágenes están **construidas y verificadas** (HTTP 200 desde Windows).
-Los `Dockerfile` y el código fuente viven en [`wslc/`](../wslc/); el mapeo completo
-está en [`wslc/wslc.config.json`](../wslc/wslc.config.json).
+El catálogo [`containers/containers.config.json`](../containers/containers.config.json)
+es la fuente única de verdad: define para cada caso su imagen(es), puerto host, red y
+contenedores. Los 12 casos se agrupan en tres categorías:
 
-| Imagen | Base | Contenedor | Puerto | Contexto |
-| --- | --- | --- | --- | --- |
-| `wsl-labs/web-nginx` | `nginx:alpine` | `wsl-labs-nginx` | **8091** → 80 | [`wslc/web-nginx`](../wslc/web-nginx) |
-| `wsl-labs/node-api` | `node:20-alpine` | `wsl-labs-node` | **8092** → 8082 | [`wslc/node-api`](../wslc/node-api) |
-| `wsl-labs/python-flask` | `python:3.12-alpine` | `wsl-labs-flask` | **8093** → 8083 | [`wslc/python-flask`](../wslc/python-flask) |
+- 🟢 **starter** — un solo contenedor de aplicación (Node, Python, Go, Nginx).
+- 🧩 **platform** — app + backend de datos comunicados por una **red `wslc`**
+  (Redis, PostgreSQL, MariaDB/LAMP, MongoDB).
+- 🏗️ **infra** — piezas de infraestructura desde imágenes oficiales (RabbitMQ,
+  Prometheus+Grafana, Elasticsearch, Jenkins).
 
-### 🌐 `wsl-labs/web-nginx` → `localhost:8091`
+Para el rol de cada caso y su puerto, consulta el
+[catálogo de casos](LABS_CATALOG.md); para el detalle operativo (imagen, comando
+`wslc` real, red, health y RAM), la [referencia de runtime](LABS_RUNTIME_REFERENCE.md).
 
-```dockerfile
-FROM nginx:alpine
-COPY index.html /usr/share/nginx/html/index.html
-EXPOSE 80
-```
+### Ciclo de vida de un caso
 
 ```powershell
-wslc build -t wsl-labs/web-nginx:latest wslc/web-nginx
-wslc run -d --name wsl-labs-nginx -p 8091:80 wsl-labs/web-nginx:latest
-curl http://localhost:8091
+# 1. Construir las imágenes custom del caso (desde su Dockerfile)
+wslc build -t wsl-labs/nginx-web:latest containers/06-nginx-web
+
+# 2. Levantar el/los contenedor(es)
+wslc run -d --name wslc-nginx-web -p 8104:80 wsl-labs/nginx-web:latest
+
+# 3. Verificar desde Windows
+curl http://localhost:8104
 ```
 
-### 🟢 `wsl-labs/node-api` → `localhost:8092`
-
-API Node.js con el módulo `http` nativo (sin dependencias). Escucha en `PORT=8082`
-dentro del contenedor.
-
-```dockerfile
-FROM node:20-alpine
-WORKDIR /app
-COPY server.js .
-ENV PORT=8082
-EXPOSE 8082
-CMD ["node", "server.js"]
-```
-
-```powershell
-wslc build -t wsl-labs/node-api:latest wslc/node-api
-wslc run -d --name wsl-labs-node -p 8092:8082 wsl-labs/node-api:latest
-curl http://localhost:8092
-```
-
-### 🐍 `wsl-labs/python-flask` → `localhost:8093`
-
-App Flask que expone `/` y `/health`. Escucha en `PORT=8083` dentro del contenedor.
-
-```dockerfile
-FROM python:3.12-alpine
-WORKDIR /app
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
-COPY app.py .
-ENV PORT=8083
-EXPOSE 8083
-CMD ["python", "app.py"]
-```
-
-```powershell
-wslc build -t wsl-labs/python-flask:latest wslc/python-flask
-wslc run -d --name wsl-labs-flask -p 8093:8083 wsl-labs/python-flask:latest
-curl http://localhost:8093
-```
-
-> [!TIP]
-> Los tres endpoints devuelven JSON con `"runtime": "wslc-container"`, lo que
-> confirma que la respuesta viene de un contenedor real y no de un demonio de la
-> distro.
+Los casos **platform** y **infra multi-contenedor** crean primero una red `wslc` y
+conectan los contenedores por nombre de servicio (por ejemplo, la app apunta a
+`REDIS_HOST=wslc-redis`). El detalle por caso está en la
+[referencia de runtime](LABS_RUNTIME_REFERENCE.md).
 
 ---
 
-## 🧭 Uso desde el Control Center
+## 🧭 Uso desde el panel (WSL Container Center)
 
-El dashboard incorpora una sección **🐳 Contenedores (WSLC)** con botones por imagen:
+El panel Node.js (`localhost:9092`) incorpora la sección de contenedores con botones
+por caso. Endpoints:
 
 | Botón | Acción | Endpoint |
 | --- | --- | --- |
-| **🔨 Construir** | Ejecuta `wslc build -t <imagen> <contexto>` | `/api/wslc/build` |
-| **▶ Ejecutar** | Ejecuta `wslc run -d --name … -p …` | `/api/wslc/run` |
-| **🛑 Detener** | Ejecuta `wslc stop` + `wslc rm` | `/api/wslc/stop` |
+| 🔨 **Construir** | `wslc build` de las imágenes del caso | `POST /api/wslc/build` |
+| ▶ **Levantar** | crea red (si aplica) y hace `wslc run` de los contenedores | `POST /api/wslc/up` |
+| 🛑 **Bajar** | detiene y elimina contenedores del caso | `POST /api/wslc/down` |
+| 📄 **Logs** | `wslc logs` del contenedor principal | `POST /api/wslc/logs` |
+| 📊 **Overview** | estado de todos los casos + detección de `wslc` | `GET /api/wslc/overview` |
 
-El panel localiza el motor en `C:\Program Files\WSL\wslc.exe`. Consulta la puesta
-en marcha del dashboard en [DASHBOARD_SETUP.md](DASHBOARD_SETUP.md).
+El panel localiza el motor en `C:\Program Files\WSL\wslc.exe` y avisa si no está.
 
 > [!NOTE]
-> Primero **Construir** (una vez por imagen), luego **Ejecutar**. Al pulsar
-> **Detener** el contenedor se descarta (es efímero), pero la imagen construida
-> permanece en `wslc images` lista para volver a ejecutarse.
+> Primero **Construir** (una vez por caso, solo los que tienen imágenes custom),
+> luego **Levantar**. Al **Bajar**, los contenedores se descartan pero las imágenes
+> construidas permanecen en `wslc images` listas para volver a levantarse.
 
 ---
 
-## 📋 Referencia rápida de comandos `wslc`
+## 📋 Comandos `wslc` ↔ `docker`
 
 `wslc` reproduce el subconjunto más habitual de `docker`:
 
-| Comando | Qué hace | Equivalente Docker |
+| Comando `wslc` | Qué hace | Equivalente Docker |
 | --- | --- | --- |
 | `wslc build -t nombre:tag ctx` | Construye una imagen desde un `Dockerfile` | `docker build` |
-| `wslc run -d --name N -p H:C img` | Ejecuta un contenedor en segundo plano | `docker run` |
+| `wslc run -d --name N -p H:C img` | Levanta un contenedor en segundo plano | `docker run -d` |
+| `wslc stop <nombre>` | Detiene y elimina un contenedor | `docker rm -f` |
 | `wslc pull imagen:tag` | Descarga una imagen de un registro | `docker pull` |
 | `wslc images` | Lista imágenes locales | `docker images` |
 | `wslc list` | Lista contenedores | `docker ps` |
 | `wslc logs <nombre>` | Muestra los logs de un contenedor | `docker logs` |
-| `wslc stop <nombre>` | Detiene un contenedor | `docker stop` |
-| `wslc rm <nombre>` | Elimina un contenedor | `docker rm` |
-| `wslc volume …` | Gestiona volúmenes | `docker volume` |
+| `wslc network create <red>` | Crea una red de contenedores | `docker network create` |
 | `wslc network …` | Gestiona redes | `docker network` |
+
+> [!TIP]
+> Un stack multi-contenedor (app + base de datos) que en Docker harías con
+> `docker compose`, en WSLC se arma con una **red `wslc`** y varios `wslc run`
+> conectados por nombre. Ver [mapeo desde docker-labs](mapping-from-docker-labs.md).
 
 ---
 
 ## 🔗 Ver también
 
-- [🕰️ Historia y referencia de WSL](wsl-historia-y-referencia.md) — ver §4 (WSL hoy: open source y WSLC)
-- [🖥️ Puesta en marcha del dashboard](DASHBOARD_SETUP.md)
-- [🧪 Lab 13 · Contenedores WSLC](../labs/13-wslc-contenedores/README.md)
+- [📚 Catálogo de casos de contenedores](LABS_CATALOG.md)
+- [🧾 Referencia de runtime por caso](LABS_RUNTIME_REFERENCE.md)
+- [🔀 Mapeo desde docker-labs](mapping-from-docker-labs.md)
+- [🕰️ Historia y referencia de WSL](wsl-historia-y-referencia.md)
 - [📁 README del repositorio](../README.md)

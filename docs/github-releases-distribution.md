@@ -1,6 +1,6 @@
-# 📦 Estrategia de distribución vía GitHub Releases — WSL Labs
+# 📦 Estrategia de distribución vía GitHub Releases — WSL Container Center
 
-> **Versión**: 0.1.2
+> **Versión**: 0.3.0
 > **Última actualización**: 2026-07-06
 > **Audiencia**: mantenedores, contribuidores, revisores técnicos
 
@@ -8,9 +8,10 @@
 
 ## 🗺️ Descripción general
 
-WSL Labs usa **GitHub Releases** como canal exclusivo de distribución para el
-instalador precompilado de Windows. El repositorio contiene únicamente **código
-fuente y scripts de build**: no se versiona ningún binario en el historial de git.
+WSL Container Center usa **GitHub Releases** como canal exclusivo de distribución
+para el instalador precompilado de Windows. El repositorio contiene únicamente
+**código fuente y scripts de build**: no se versiona ningún binario en el historial
+de git.
 
 Este documento explica el razonamiento, el flujo completo de release y cómo enlazar
 el instalador desde la web del proyecto.
@@ -67,8 +68,8 @@ Pushear un tag `vX.Y.Z` dispara el workflow de GitHub Actions
 .\scripts\windows\release.ps1 -Push
 
 # Opción B — a mano
-git tag v0.1.2
-git push origin v0.1.2
+git tag v0.3.0
+git push origin v0.3.0
 ```
 
 El script `release.ps1` **no compila localmente**: lee la versión de `version.txt`,
@@ -92,7 +93,7 @@ El build ocurre en el runner `windows-latest`, que:
 El release queda disponible en:
 
 ```text
-https://github.com/vladimiracunadev-create/wsl-labs/releases/tag/v0.1.2
+https://github.com/vladimiracunadev-create/wsl-labs/releases/tag/v0.3.0
 ```
 
 ### Build manual (sin release)
@@ -110,9 +111,7 @@ Para compilar del todo en local, ver [windows-installer.md](windows-installer.md
 
 | Tag | Instalador | Notas |
 | ----- | ----------- | ------- |
-| `v0.1.0` | `wsl-labs-setup-0.1.0.exe` | Primer WSL Control Center — paridad estructural con los repos hermanos |
-| `v0.1.1` | `wsl-labs-setup-0.1.1.exe` | Operatividad estilo Docker: panel corre como root, sin contraseña; botón "Instalar" |
-| `v0.1.2` | `wsl-labs-setup-0.1.2.exe` | **6/6 servicios operativos verificados** (node/flask como systemd, health IPv4+IPv6, keepalive) |
+| `v0.3.0` | `wsl-labs-setup-0.3.0.exe` | **WSL Container Center**: 12 casos portados de docker-labs, verificados corriendo con `wslc` |
 
 Ver el historial completo en [CHANGELOG.md](../CHANGELOG.md).
 
@@ -124,7 +123,7 @@ Ver el historial completo en [CHANGELOG.md](../CHANGELOG.md).
 [ ] version.txt actualizado con la nueva versión
 [ ] CHANGELOG.md actualizado con los cambios de este release
 [ ] CI en verde (docs.yml, dashboard.yml, build-windows.yml)
-[ ] Instalador probado en una máquina Windows limpia con WSL2 + Node
+[ ] Instalador probado en una máquina Windows limpia con WSL 2.9+ (wslc) + Node
 [ ] Los binarios NO están en el repo (.gitignore cubre launcher/windows/*.exe y dist/)
 [ ] Árbol de trabajo limpio (release.ps1 lo verifica antes de taggear)
 ```
@@ -146,7 +145,7 @@ https://github.com/<owner>/<repo>/releases/download/<tag>/<archivo>
 Ejemplo:
 
 ```text
-https://github.com/vladimiracunadev-create/wsl-labs/releases/download/v0.1.2/wsl-labs-setup-0.1.2.exe
+https://github.com/vladimiracunadev-create/wsl-labs/releases/download/v0.3.0/wsl-labs-setup-0.3.0.exe
 ```
 
 Esta URL es permanente una vez publicado el release.
@@ -166,9 +165,9 @@ El sitio del proyecto debe enlazar a GitHub Releases para las descargas.
 </a>
 
 <!-- Asset directo de una versión concreta (actualizar en cada release) -->
-<a href="https://github.com/vladimiracunadev-create/wsl-labs/releases/download/v0.1.2/wsl-labs-setup-0.1.2.exe"
+<a href="https://github.com/vladimiracunadev-create/wsl-labs/releases/download/v0.3.0/wsl-labs-setup-0.3.0.exe"
    class="btn-download">
-  Descargar v0.1.2 — Instalador Windows (.exe)
+  Descargar v0.3.0 — Instalador Windows (.exe)
 </a>
 ```
 
@@ -181,9 +180,9 @@ sin editar el HTML en cada publicación.
 
 | Componente | Convención | Ejemplo |
 | ------------ | ----------- | --------- |
-| Tag Git | `v{semver}` | `v0.1.2` |
-| Nombre del instalador | `wsl-labs-setup-{semver}.exe` | `wsl-labs-setup-0.1.2.exe` |
-| Título del release | `WSL Labs v{semver}` | `WSL Labs v0.1.2` |
+| Tag Git | `v{semver}` | `v0.3.0` |
+| Nombre del instalador | `wsl-labs-setup-{semver}.exe` | `wsl-labs-setup-0.3.0.exe` |
+| Título del release | `WSL Container Center v{semver}` | `WSL Container Center v0.3.0` |
 
 El disparador del workflow solo acepta tags que casen `v[0-9]+.[0-9]+.[0-9]+`.
 

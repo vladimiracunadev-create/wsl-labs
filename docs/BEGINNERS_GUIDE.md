@@ -1,43 +1,45 @@
-# 🎓 Guía para principiantes — wsl-labs
+# 🎓 Guía para principiantes — WSL Container Center
 
-> **Versión**: v1 · Guía pensada para quien empieza con **WSL**, Linux dentro de
-> Windows y este repositorio.
+> **Versión**: v1 · Guía pensada para quien empieza con **contenedores**, `wslc` y
+> este repositorio.
 
 ## 🗺️ Esquema
 
 ```mermaid
 graph TD
-    subgraph FUND["📚 Fundamentos"]
-        L1["01 · Instalar WSL"]
-        L2["02 · Primeros pasos"]
-        L3["03 · WSL vs Docker vs VM"]
-        L4["04 · systemd"]
+    subgraph START["🌱 Starter"]
+        S1["01 · API Node.js"]
+        S2["03 · API Python"]
+        S3["10 · API Go"]
+        S4["06 · Nginx web"]
     end
-    subgraph SERV["⚙️ Servicios"]
-        L5["05 · nginx"]
-        L6["06 · apache + php"]
-        L7["07 · node"]
-        L8["08 · flask"]
-        L9["09 · postgres"]
+    subgraph PLAT["🧩 Platform"]
+        P1["04 · Redis + app"]
+        P2["05 · API + PostgreSQL"]
+        P3["02 · LAMP"]
+        P4["09 · Multi-servicio (Mongo)"]
     end
-    subgraph OPER["🛠️ Operación"]
-        L10["10 · backup"]
-        L11["11 · mini-servidor"]
-        L12["12 · troubleshooting"]
+    subgraph INFRA["🏗️ Infra"]
+        I1["07 · RabbitMQ"]
+        I2["08 · Prometheus + Grafana"]
+        I3["11 · Elasticsearch"]
+        I4["12 · Jenkins"]
     end
-    FUND --> SERV --> OPER
+    START --> PLAT --> INFRA
 ```
 
 ## 🧭 Si solo lees una cosa
 
 Empieza así:
 
-1. Instala WSL2 + Ubuntu (`wsl --install`) y reinicia si es la primera vez.
-2. Arranca el Control Center: `make serve` (o `node dashboard-server/server.js`).
+1. Instala WSL 2 (`wsl --install`) y habilita el motor de contenedores:
+   `wsl --update --pre-release`.
+2. Instala Node.js 18+ en **Windows** y arranca el panel: `make serve`
+   (o `node dashboard-server/server.js`).
 3. Abre el panel en **<http://localhost:9092>**.
-4. Elige un servicio → **📦 Instalar → ▶ Levantar**.
+4. Elige un caso starter → **📦 Construir → ▶ Levantar**.
 5. Pulsa **🌐 Abrir** para verlo en el navegador.
-6. Cuando termines, **⏹ Detener**.
+6. Cuando termines, **⏹ Bajar**.
 
 Documentos relacionados:
 
@@ -47,58 +49,78 @@ Documentos relacionados:
 
 ---
 
-## 🐧 ¿Qué es WSL?
+## 🐳 ¿Qué es un contenedor?
 
-**WSL** (Windows Subsystem for Linux) es una capa de Windows que te deja correr
-un Linux real (Ubuntu, Debian…) **dentro de Windows**, sin máquina virtual
-pesada ni arranque dual. En su versión **WSL2** usa un kernel Linux real con
-virtualización ligera.
+Un **contenedor** es una unidad ligera y aislada que empaqueta una app con todo lo que
+necesita para correr (código, runtime, librerías), a partir de una **imagen**. Se crea,
+se ejecuta y se descarta sin "ensuciar" el sistema anfitrión — a diferencia de instalar
+un programa directamente en el sistema operativo.
 
-Lo importante para este repo: WSL no es solo una terminal. Puedes levantar
-**servicios reales** (nginx, apache, PostgreSQL, apps Node/Python) y accederlos
-desde el `localhost` de Windows, como si fueran nativos.
+Piensa en dos piezas:
+
+- **Imagen** — la plantilla inmutable (p. ej. `nginx:alpine`, o una custom construida
+  desde un `Dockerfile`).
+- **Contenedor** — una instancia en ejecución de esa imagen, con sus puertos publicados.
+
+---
+
+## 🐳 ¿Qué es `wslc`?
+
+**WSLC** es el **motor de contenedores nativo de WSL** que Microsoft añadió a partir de
+WSL **2.9+** (en preview). Se maneja con el comando `wslc` (ejecutable en
+`C:\Program Files\WSL\wslc.exe`) y su interfaz es casi idéntica a la de Docker:
+`wslc build / run / images / list / logs / stop / rm / network`.
 
 > [!NOTE]
-> `wsl-labs` es **local**: no hay contenedores, ni Kubernetes, ni nube. Todo vive
-> en tu Windows + WSL2. Para entender las diferencias con contenedores y VMs, lee
-> [WSL vs Docker vs VM](03-wsl-vs-docker-vs-vm.md).
+> `wsl-labs` es como [`docker-labs`](https://github.com/vladimiracunadev-create/docker-labs),
+> pero el motor es **`wslc`** en vez de Docker. Es **local**: no hay Kubernetes ni nube;
+> todo vive en tu Windows + WSL 2. Para la referencia completa del motor, lee el
+> [Track de contenedores WSLC](wslc-contenedores.md).
+
+Para obtener `wslc`:
+
+```powershell
+wsl --update --pre-release
+& "C:\Program Files\WSL\wslc.exe" version
+```
 
 ---
 
 ## 🧱 Qué es este repositorio
 
-`wsl-labs` convierte WSL en una plataforma **operable con un panel web**. Tiene
+`wsl-labs` es un **panel para levantar y controlar contenedores** con `wslc`. Tiene
 tres piezas:
 
 | Pieza | Rol |
 | --- | --- |
-| 🧭 **Control Center** (Node.js, `:9092`) | Instala, arranca, detiene y monitorea servicios en WSL |
-| 🪟 **Launcher Windows** (`.exe`) | Verifica WSL2, arranca el panel y abre el navegador |
-| 🐧 **12 labs** (`labs/NN-*`) | Guías paso a paso de instalación, systemd, nginx, apache, node, python, postgres, backup… |
+| 🧭 **Panel** (Node.js, `:9092`) | Construye imágenes, levanta/baja contenedores y muestra su estado |
+| 🪟 **Launcher Windows** (`.exe`) | Verifica WSL 2, arranca el panel y abre el navegador |
+| 🐳 **12 casos** (`containers/NN-*`) | Casos portados de docker-labs, ejecutados con `wslc` |
 
-Y hay **12 labs** de dos tipos:
+Los 12 casos se agrupan en tres categorías:
 
-- ⚙️ **service** — publican un servicio real en un puerto (05, 06, 07, 08, 09, 11).
-- 📚 **learning** — enseñan un concepto, sin servicio (01, 02, 03, 04, 10, 12).
+- 🌱 **starter** — un contenedor, imagen custom, arranque simple (`01`, `03`, `06`, `10`).
+- 🧩 **platform** — app custom + dependencia sobre una red wslc (`02`, `04`, `05`, `09`).
+- 🏗️ **infra** — imágenes públicas de infraestructura (`07`, `08`, `11`, `12`).
 
 ---
 
-## 🧠 Panel vs servicio
+## 🧠 Panel vs contenedor
 
 Esta es la confusión más común al inicio:
 
 | Concepto | Qué significa |
 | --- | --- |
-| **Panel (`:9092`)** | La capa que instala/arranca/detiene servicios en WSL |
-| **Servicio** | La app o servidor real (nginx, flask…) que corre dentro de WSL |
+| **Panel (`:9092`)** | La capa que construye/levanta/baja contenedores con `wslc` |
+| **Contenedor** | La app real (nginx, la API, redis…) que corre en el motor `wslc` |
 
 Ejemplo:
 
-- `05-servidor-web-nginx` puede estar **healthy** en el panel.
-- El sitio real lo abres en **<http://localhost:8080>**.
+- `06 Nginx web` puede aparecer **running** en el panel.
+- El sitio real lo abres en **<http://localhost:8104>**.
 
-Por eso el panel separa el **estado** (¿está corriendo y sano?) del botón
-**Abrir** (entrar al servicio real).
+Por eso el panel separa el **estado** (¿está corriendo y sano?) del botón **Abrir**
+(entrar al contenedor real).
 
 ---
 
@@ -107,24 +129,17 @@ Por eso el panel separa el **estado** (¿está corriendo y sano?) del botón
 ### Paso 1 — Verifica los prerrequisitos
 
 ```powershell
-wsl --status        # WSL en modo 2 por defecto
-wsl -l -v           # tu distro (Ubuntu) con VERSION 2
-node --version      # Node 18+ en Windows (para el panel)
+wsl --status                                     # WSL en modo 2
+node --version                                   # Node 18+ en Windows (para el panel)
+& "C:\Program Files\WSL\wslc.exe" version        # motor wslc disponible
 ```
 
 Necesitas como mínimo:
 
-- Windows 10 (2004+) o Windows 11 con **WSL2**
-- Una distro Ubuntu/Debian
+- Windows 10 (2004+) o Windows 11 con **WSL 2.9+** y `wslc`
 - **Node.js 18+** en **Windows** (no dentro de WSL)
 
-### Paso 2 — Prepara la distro (una vez)
-
-```powershell
-wsl bash scripts/install-base.sh
-```
-
-### Paso 3 — Levanta el panel
+### Paso 2 — Levanta el panel
 
 ```powershell
 make serve
@@ -132,68 +147,63 @@ make serve
 node dashboard-server/server.js
 ```
 
-### Paso 4 — Entra al panel
+### Paso 3 — Entra al panel
 
 Abre **<http://localhost:9092>**.
 
-### Paso 5 — Elige un servicio simple
+### Paso 4 — Elige un caso simple
 
-| Lab | Ideal para aprender |
+| Caso | Ideal para aprender |
 | --- | --- |
-| `05-servidor-web-nginx` | Servidor web básico y puertos en localhost |
-| `07-nodejs-entorno-dev` | App Node.js como servicio systemd |
-| `08-python-entorno-dev` | App Flask en un venv como servicio systemd |
+| `01 API Node.js` | Construir una imagen custom y publicar un puerto |
+| `06 Nginx web` | Servir contenido estático desde un contenedor |
+| `10 API Go` | Imagen compilada multi-stage |
 
-Pulsa **📦 Instalar → ▶ Levantar** y luego **🌐 Abrir**.
+Pulsa **📦 Construir → ▶ Levantar** y luego **🌐 Abrir**.
 
-### Paso 6 — Observa estas piezas
+### Paso 5 — Observa estas piezas
 
-Cada vez que levantes un servicio, intenta responder:
+Cada vez que levantes un caso, intenta responder:
 
+- si usa **imagen custom** (hay que construir) o **pública** (va directo a levantar)
 - qué puerto publica
-- si es un servicio `service` o una unidad `systemd`
-- cómo se ve su salud en el panel (`healthy` / `stopped`…)
-- dónde están sus logs
+- si es **un solo contenedor** o **varios sobre una red wslc**
+- cómo se ve su estado en el panel (`running` / `stopped` / `degraded`…)
 - cuál es su URL real en `localhost`
 
 ---
 
-## 📚 Ruta de aprendizaje (labs 01 → 12)
+## 📚 Ruta de aprendizaje (starter → platform → infra)
 
-El catálogo está numerado para seguirse en orden. Empieza por los learning y
-ve sumando servicios.
+El catálogo está pensado para subir de dificultad. Empieza por los starter y ve
+sumando complejidad.
 
-### 🟢 Nivel 1 — Fundamentos de WSL
+### 🌱 Nivel 1 — Starter (un contenedor)
 
-| Lab | Qué aprendes |
+| Caso | Qué aprendes |
 | --- | --- |
-| `01-instalacion-ubuntu` | Instalar y configurar WSL2 + Ubuntu desde cero |
-| `02-comandos-base-wsl` | Comandos de `wsl.exe` y del shell Linux |
-| `03-sistema-de-archivos` | Interoperar archivos Windows ↔ WSL y rendimiento |
+| `01 API Node.js` | Construir imagen custom (`node:20-alpine`) y publicar `:8101` |
+| `03 API Python` | API Flask en contenedor (`python:3.12-alpine`) en `:8102` |
+| `10 API Go` | Imagen multi-stage compilada en `:8103` |
+| `06 Nginx web` | Servir estáticos con `nginx:alpine` en `:8104` |
 
-### 🟡 Nivel 2 — Servicios y systemd
+### 🧩 Nivel 2 — Platform (multi-contenedor + red)
 
-| Lab | Qué aprendes |
+| Caso | Qué aprendes |
 | --- | --- |
-| `04-systemd-servicios` | Habilitar systemd y administrar servicios en WSL |
-| `05-servidor-web-nginx` | Servir web con nginx en `:8080` |
-| `06-servidor-apache-php` | Apache + PHP en `:8081` |
+| `04 Redis + app` | App Node que habla con `redis:7-alpine` por una red wslc (`:8105`) |
+| `05 API + PostgreSQL` | API Python conectada a `postgres:15` por red (`:8106`) |
+| `02 LAMP` | PHP + Apache con `mariadb:10.6` por red (`:8107`) |
+| `09 Multi-servicio` | Backend Node + `mongo:7` por red (`:8112`) |
 
-### 🔴 Nivel 3 — Apps y datos
+### 🏗️ Nivel 3 — Infra (imágenes públicas)
 
-| Lab | Qué aprendes |
+| Caso | Qué aprendes |
 | --- | --- |
-| `07-nodejs-entorno-dev` | API Node.js (http nativo, sin express) en `:8082` |
-| `08-python-entorno-dev` | App Flask en un venv en `:8083` |
-| `09-postgresql-en-wsl` | Base de datos PostgreSQL en `:5432` |
-
-### 🏁 Nivel 4 — Integración y operación
-
-| Lab | Qué aprendes |
-| --- | --- |
-| `10-backup-export-import` | Exportar, importar y clonar distros WSL |
-| `11-mini-servidor-completo` | Stack combinado (web + db) en `:8090` |
-| `12-troubleshooting` | Diagnóstico y resolución de problemas |
+| `07 RabbitMQ` | Broker de mensajería con panel de administración (`:8109`) |
+| `08 Prometheus + Grafana` | Observabilidad: métricas + dashboards por red (`:8110`/`:8111`) |
+| `11 Elasticsearch` | Motor de búsqueda de nodo único (`:8113`) |
+| `12 Jenkins CI` | Servidor de integración continua (`:8114`) |
 
 ---
 
@@ -201,36 +211,36 @@ ve sumando servicios.
 
 | Perfil | CPU | RAM | Disco | Uso recomendado |
 | --- | ---: | ---: | ---: | --- |
-| Básico | 2 núcleos | 8 GB | 15 GB | Panel + 1 servicio |
-| Cómodo | 4 núcleos | 16 GB | 20 GB SSD | Panel + varios servicios |
-| Avanzado | 4+ núcleos | 16 GB+ | 30 GB SSD | Mini-servidor + todo el stack |
+| Básico | 2 núcleos | 8 GB | 15 GB | Panel + 1 caso starter |
+| Cómodo | 4 núcleos | 16 GB | 25 GB SSD | Panel + varios casos platform |
+| Avanzado | 4+ núcleos | 16 GB+ | 30 GB SSD | Casos infra (Elasticsearch, Jenkins) |
 
 > [!TIP]
-> WSL2 usa memoria dinámica: crece según lo que corras dentro. Con 8 GB puedes
-> operar el panel y un par de servicios sin problema.
+> Los casos **infra** (`11` Elasticsearch, `12` Jenkins) consumen bastante RAM y tardan
+> más en arrancar. Con 8 GB, quédate en starter/platform.
 
 ---
 
 ## ⚠️ Errores comunes
 
-### El panel abre, pero el servicio no
+### El panel abre, pero el caso no
 
 Posibles causas:
 
-- el servicio no está instalado (**📦 Instalar** primero)
-- el servicio no está levantado (**▶ Levantar**)
+- la imagen custom no está construida (**📦 Construir** primero)
+- el contenedor no está levantado (**▶ Levantar**)
 - el puerto está ocupado por otra app en Windows
 
-### Levanté un servicio y luego "desapareció"
+### El panel dice "unavailable"
 
-WSL puede apagarse sola por inactividad. El **keepalive** del panel lo evita
-mientras el Control Center corre. Si cerraste el panel, vuelve a abrirlo: los
-servicios systemd (`node`, `flask`) rearrancan solos en el siguiente boot.
+`wslc` no está disponible. Actualiza WSL con `wsl --update --pre-release`, reinicia con
+`wsl --shutdown` y comprueba `& "C:\Program Files\WSL\wslc.exe" version`.
 
-### El panel dice "No instalado" aunque instalé por terminal
+### Un caso queda "degraded" un rato
 
-Refresca el panel. La detección **cachea positivos**; si aun así falla, revisa
-la [Guía de resolución de problemas](TROUBLESHOOTING.md).
+El contenedor arrancó pero su proceso interno aún no responde. Refresca el panel;
+pasará a **running**. Los casos infra (Elasticsearch, Jenkins) tardan más. Si persiste,
+revisa la [Guía de resolución de problemas](TROUBLESHOOTING.md).
 
 ---
 
@@ -238,12 +248,12 @@ la [Guía de resolución de problemas](TROUBLESHOOTING.md).
 
 Que puedas pasar de:
 
-- "WSL es solo una terminal Linux"
+- "no sé qué es un contenedor ni qué es `wslc`"
 
 a:
 
-- "sé instalar, levantar y abrir servicios reales en localhost, y entiendo
-  cuándo usar cada lab".
+- "sé construir imágenes, levantar y abrir contenedores reales en localhost con `wslc`,
+  y entiendo la diferencia entre starter, platform e infra".
 
 ---
 
@@ -251,6 +261,7 @@ a:
 
 - [¿Qué es WSL?](00-que-es-wsl.md)
 - [WSL vs Docker vs VM](03-wsl-vs-docker-vs-vm.md)
+- [Track de contenedores WSLC](wslc-contenedores.md)
 - [Manual de usuario](USER_MANUAL.md)
-- [Setup del Control Center](DASHBOARD_SETUP.md)
+- [Setup del panel](DASHBOARD_SETUP.md)
 - [Resolución de problemas](TROUBLESHOOTING.md)

@@ -1,6 +1,6 @@
-# 🪟 Instalador Windows — WSL Labs
+# 🪟 Instalador Windows — WSL Container Center
 
-> **Versión**: 0.1.2
+> **Versión**: 0.3.0
 > **Última actualización**: 2026-07-06
 > **Audiencia**: usuarios finales de Windows, mantenedores, revisores técnicos
 > **Distribución**: GitHub Releases (el binario **no** se incluye en el repositorio)
@@ -9,15 +9,15 @@
 
 ## 🗺️ Descripción general
 
-WSL Labs incluye un instalador nativo para Windows (`wsl-labs-setup-{version}.exe`)
-para usuarios que prefieren una experiencia de instalación con un clic en lugar de
-clonar el repositorio a mano. El instalador está construido con **Inno Setup**,
-empaqueta el **launcher compilado con Go** e instala el workspace en
+WSL Container Center incluye un instalador nativo para Windows
+(`wsl-labs-setup-{version}.exe`) para usuarios que prefieren una instalación con un
+clic en lugar de clonar el repositorio a mano. El instalador está construido con
+**Inno Setup**, empaqueta el **launcher compilado con Go** e instala el workspace en
 `%LOCALAPPDATA%\WSLLabs`.
 
-A diferencia de un instalador de aplicación tradicional, **WSL Labs no instala el
-sistema Linux**: se apoya en **WSL 2**, que debe estar instalado por separado. El
-launcher lo verifica y detecta la distro antes de arrancar nada.
+A diferencia de un instalador tradicional, **no instala el motor de contenedores**:
+se apoya en **WSLC**, incluido en **WSL 2.9+ (preview)**, que debe estar disponible
+por separado. El launcher lo verifica antes de arrancar nada.
 
 ### 🗺️ Esquema
 
@@ -43,13 +43,12 @@ flowchart LR
 | Requisito | Versión | Notas |
 | ----------- | --------- | ------- |
 | 🪟 Windows | 10 (2004+) u 11, 64-bit | Obligatorio (`MinVersion=10.0` en el `.iss`) |
-| 🐧 WSL 2 | Habilitado | Obligatorio — **no** viene en el instalador. `wsl --install` |
-| 🐧 Distro Linux | Ubuntu/Debian recomendada | Al menos una distro instalada (`wsl -l -q`) |
-| 🟢 Node.js | LTS (18+) en el PATH | Obligatorio — el Control Center corre en Windows con Node |
+| 🐳 WSL 2.9+ con WSLC | Preview | Obligatorio — **no** viene en el instalador. `wsl --update --pre-release` |
+| 🟢 Node.js | LTS (18+) en el PATH | Obligatorio — el panel corre en Windows con Node |
 
 > [!IMPORTANT]
-> Ni WSL 2 ni Node.js se empaquetan en el instalador, por diseño. El launcher
-> valida su presencia al arrancar y guía al usuario con instrucciones si falta alguno.
+> Ni WSLC ni Node.js se empaquetan en el instalador, por diseño. El launcher valida
+> su presencia al arrancar y guía al usuario con instrucciones si falta alguno.
 
 ---
 
@@ -61,7 +60,7 @@ flowchart LR
 4. Si Windows SmartScreen muestra una advertencia → ver [¿Por qué no se usa firma digital?](#-por-qué-no-se-usa-firma-digital-en-esta-fase).
 5. Acepta el directorio de instalación (`%LOCALAPPDATA%\WSLLabs` por defecto).
 6. Opcionalmente marca **"Crear acceso directo en el escritorio"** (desmarcado por defecto).
-7. Clic en **Instalar** → **Iniciar WSL Labs**.
+7. Clic en **Instalar** → **Iniciar WSL Container Center**.
 
 El instalador **no requiere permisos de administrador** (`PrivilegesRequired=lowest`):
 instala en el espacio del usuario.
@@ -74,13 +73,12 @@ instala en el espacio del usuario.
 | ------ | -------- |
 | 🔔 Muestra aviso de binario sin firma | `MsgBox` de confirmación antes de instalar (función `InitializeSetup`) |
 | 📂 Copia el launcher | `wsl-labs-launcher.exe` a `{app}` |
-| 🧭 Copia el Control Center | `dashboard-server\` (backend Node.js), excluyendo `node_modules` |
+| 🧭 Copia el panel | `dashboard-server\` (backend Node.js), excluyendo `node_modules` |
 | 🎨 Copia los assets del panel | `index.html`, `dashboard.css`, `dashboard.js` |
-| 📇 Copia el catálogo | `labs.config.json` (fuente única de verdad) |
-| 🐧 Copia los 12 labs | `labs\` (guías + `install-*.sh`), excluyendo `node_modules`, `__pycache__`, `*.pyc` |
-| 🔧 Copia los scripts | `scripts\` (aprovisionamiento dentro de WSL2) |
+| 📇 Copia el catálogo | `containers\containers.config.json` (fuente única de verdad) |
+| 🐳 Copia los 12 casos | `containers\` (Dockerfiles + código de las imágenes custom), excluyendo `node_modules`, `__pycache__`, `*.pyc` |
 | 📄 Copia docs base | `README.md`, `LICENSE` |
-| 🧭 Crea entradas en el menú Inicio | "WSL Labs — Control Center" y "WSL Labs — Uninstall" |
+| 🧭 Crea entradas en el menú Inicio | "WSL Container Center" y "WSL Container Center — Uninstall" |
 | 🖥️ Crea acceso directo opcional en el escritorio | Desmarcado por defecto |
 | 🗑️ Registra el desinstalador | Eliminación limpia desde Configuración → Aplicaciones |
 | ▶️ Ofrece iniciar al finalizar | Paso `[Run]`, opcional |
@@ -89,8 +87,8 @@ instala en el espacio del usuario.
 
 ## 🚫 Qué NO hace el instalador
 
-- **No** instala WSL 2 ni ninguna distro Linux (usa `wsl --install`).
-- **No** instala Node.js (el Control Center lo necesita en el PATH).
+- **No** instala WSL ni el motor WSLC (usa `wsl --update --pre-release`).
+- **No** instala Node.js (el panel lo necesita en el PATH).
 - **No** requiere permisos de administrador (instala en el espacio del usuario).
 - **No** modifica el PATH del sistema ni el registro más allá de las entradas estándar de Inno Setup.
 - **No** contiene firma digital en v0.x/v1.x (ver más abajo).
@@ -106,14 +104,14 @@ estándar de Go** — sin dependencias externas.
 ### Qué hace
 
 1. Muestra el banner de inicio con la versión y el aviso de binario sin firma.
-2. **Verifica WSL 2** (`wsl.exe --status`); si falta, guía con `wsl --install`.
+2. **Verifica WSL** (`wsl.exe --status`); si falta, guía con `wsl --install` / `wsl --update --pre-release`.
 3. **Detecta la distro** (`wsl.exe -l -q`, limpiando los bytes nulos del UTF-16).
 4. Localiza la raíz del workspace (variable `WSL_LABS_HOME`, directorio del `.exe` o `cwd`; válida si contiene `dashboard-server/`).
 5. **Verifica Node.js** (`node --version`).
-6. Arranca el Control Center en segundo plano: `node dashboard-server/server.js` (puerto **9092**), con la raíz del repo como directorio de trabajo.
-7. Hace **polling** a `http://localhost:9092/api/overview` hasta 90 s (cada 3 s).
+6. Arranca el panel en segundo plano: `node dashboard-server/server.js` (puerto **9092**), con la raíz del repo como directorio de trabajo.
+7. Hace **polling** a `http://localhost:9092/api/wslc/overview` hasta 90 s (cada 3 s).
 8. Abre `http://localhost:9092` en el navegador por defecto (`rundll32`, con fallback a `cmd /c start`).
-9. Muestra el resumen de URLs. La ventana se puede cerrar; el Control Center sigue corriendo.
+9. Muestra el resumen de URLs. La ventana se puede cerrar; el panel sigue corriendo.
 
 > [!TIP]
 > Si el launcher se lanza por doble clic (sin consola interactiva), pausa con
@@ -135,7 +133,7 @@ launcher/
 
 ```powershell
 # Desde la raíz del repo
-.\scripts\windows\build-launcher.ps1 -Version 0.1.2
+.\scripts\windows\build-launcher.ps1 -Version 0.3.0
 ```
 
 El script inyecta la versión con `-ldflags "-X main.launcherVersion=..."` y lee
@@ -161,12 +159,12 @@ git clone https://github.com/vladimiracunadev-create/wsl-labs.git
 cd wsl-labs
 
 # 2. Compilar el launcher (Go)
-.\scripts\windows\build-launcher.ps1 -Version 0.1.2
+.\scripts\windows\build-launcher.ps1 -Version 0.3.0
 
 # 3. Compilar el instalador (Inno Setup)
-.\scripts\windows\build-installer.ps1 -Version 0.1.2
+.\scripts\windows\build-installer.ps1 -Version 0.3.0
 
-# Resultado: dist\wsl-labs-setup-0.1.2.exe
+# Resultado: dist\wsl-labs-setup-0.3.0.exe
 ```
 
 `build-installer.ps1` localiza `ISCC.exe` automáticamente (o acepta `-InnoSetupPath`),
@@ -185,13 +183,12 @@ El script de Inno Setup (`installer/wsl-labs.iss`, sección `[Files]`) empaqueta
 | Elemento | Incluido | Notas |
 | ---------- | :--------: | ------- |
 | `wsl-labs-launcher.exe` | ✅ | Compilado desde `launcher/windows/main.go` |
-| `dashboard-server/` | ✅ | Control Center (Node.js), `node_modules` excluido |
+| `dashboard-server/` | ✅ | Panel (Node.js), `node_modules` excluido |
 | `index.html`, `dashboard.css`, `dashboard.js` | ✅ | Assets del panel servidos en `:9092` |
-| `labs.config.json` | ✅ | Catálogo — fuente única de verdad |
-| `labs/` (01–12) | ✅ | Guías + `install-*.sh`; `node_modules`/`__pycache__`/`*.pyc` excluidos |
-| `scripts/` | ✅ | Aprovisionamiento dentro de WSL2 |
+| `containers/containers.config.json` | ✅ | Catálogo — fuente única de verdad |
+| `containers/` (01–12) | ✅ | Dockerfiles + código de las imágenes custom; `node_modules`/`__pycache__`/`*.pyc` excluidos |
 | `README.md`, `LICENSE` | ✅ | Documentación base |
-| `node_modules/` | ❌ | El Control Center usa `http` nativo, no necesita npm install |
+| `node_modules/` | ❌ | El panel usa `http` nativo, no necesita npm install |
 | `.git/` | ❌ | No necesario en tiempo de ejecución |
 | `dist/` | ❌ | Artefactos de build |
 | `installer/`, `scripts/windows/` | ❌ | Scripts de build, no necesarios en ejecución |
@@ -201,8 +198,8 @@ El script de Inno Setup (`installer/wsl-labs.iss`, sección `[Files]`) empaqueta
 
 ## 🗑️ Desinstalación
 
-Desde **Configuración de Windows → Aplicaciones → WSL Labs → Desinstalar**
-(o el acceso directo "WSL Labs — Uninstall" del menú Inicio).
+Desde **Configuración de Windows → Aplicaciones → WSL Container Center → Desinstalar**
+(o el acceso directo "WSL Container Center — Uninstall" del menú Inicio).
 
 El desinstalador:
 
@@ -211,10 +208,9 @@ El desinstalador:
 3. Elimina la entrada de registro del desinstalador.
 
 > [!IMPORTANT]
-> El desinstalador **no** toca tu distro WSL ni los servicios Linux instalados
-> dentro de ella (nginx, apache, node, flask, postgres…). Para revertir esos
-> servicios, opéralos desde el Control Center o desde WSL antes de desinstalar.
-> Para eliminar la distro completa: `wsl --unregister <distro>`.
+> El desinstalador **no** toca tu instalación de WSL ni las imágenes/contenedores
+> `wslc` que hayas construido. Para limpiar esos artefactos, usa `wslc stop`,
+> `wslc images` y `wslc network` antes de desinstalar.
 
 ---
 
@@ -222,9 +218,9 @@ El desinstalador:
 
 ### La decisión
 
-WSL Labs v0.x/v1.x **no** usa firma digital de código para el instalador ni el
-launcher. Es una **decisión de producto intencional y explícita**, no un descuido.
-El `.iss` ya deja la directiva `SignTool` comentada, lista para activarse.
+WSL Container Center v0.x/v1.x **no** usa firma digital de código para el instalador
+ni el launcher. Es una **decisión de producto intencional y explícita**, no un
+descuido. El `.iss` ya deja la directiva `SignTool` comentada, lista para activarse.
 
 ### Razones
 
@@ -233,7 +229,7 @@ El `.iss` ya deja la directiva `SignTool` comentada, lista para activarse.
 | 💰 **Costo** | Un certificado EV (necesario para reputación plena en SmartScreen) cuesta $300–700/año. Para un proyecto de portfolio open-source no se justifica en la fase inicial. |
 | 🧪 **Fase de validación** | El objetivo de v0.x es validar la experiencia de instalación, el comportamiento del launcher y el flujo de distribución. Firmar agrega complejidad sin valor funcional aún. |
 | 🔧 **Carga de mantenimiento** | Los certificados requieren renovación, custodia de claves y configuración del pipeline de CI. |
-| 🎯 **Prioridad** | El valor técnico está en el workspace WSL, no en la infraestructura de firma. |
+| 🎯 **Prioridad** | El valor técnico está en el motor de contenedores y los 12 casos, no en la infraestructura de firma. |
 
 ### Impacto para el usuario final
 
@@ -273,12 +269,12 @@ organización que pueda proveer un certificado EV. El `.iss` ya tiene el hueco:
 | Síntoma | Causa | Solución |
 | --------- | ------- | --------- |
 | Advertencia de SmartScreen | Binario sin firma | **Más información** → **Ejecutar de todas formas** |
-| `wsl.exe no encontrado` | WSL 2 no instalado | `wsl --install`, reiniciar Windows y reintentar |
-| `No se encontró ninguna distribución` | Sin distro instalada | `wsl --install -d Ubuntu`; verificar con `wsl -l -q` |
+| `wsl.exe no encontrado` | WSL no instalado | `wsl --install`, reiniciar Windows y reintentar |
+| `wslc no encontrado` | WSL sin el motor de contenedores | `wsl --update --pre-release`, luego `wsl --shutdown` |
 | `Node.js no encontrado` | Node no está en el PATH | Instalar Node.js LTS desde <https://nodejs.org/> y reabrir la terminal |
-| `No se pudo localizar la raíz de WSL Labs` | Launcher fuera de la carpeta de instalación | Ejecutar desde `%LOCALAPPDATA%\WSLLabs` o definir `WSL_LABS_HOME` |
+| `No se pudo localizar la raíz del workspace` | Launcher fuera de la carpeta de instalación | Ejecutar desde `%LOCALAPPDATA%\WSLLabs` o definir `WSL_LABS_HOME` |
 | El navegador no abre / panel no carga | Puerto 9092 en uso | Verificar con `netstat -ano \| findstr 9092`; recargar el navegador |
-| El Control Center no responde tras 90 s | Node/WSL lentos en primer arranque | Recargar `http://localhost:9092`; revisar que `node dashboard-server\server.js` corra a mano |
+| El panel no responde tras 90 s | Node/WSL lentos en primer arranque | Recargar `http://localhost:9092`; revisar que `node dashboard-server\server.js` corra a mano |
 
 ---
 
@@ -288,7 +284,7 @@ Esta capa de distribución Windows demuestra:
 
 - **Pensamiento de producto**: diseñar para el usuario final más allá del `git clone`.
 - **Dominio de Go**: binario nativo Windows sin dependencias en runtime.
-- **Puente Windows ↔ WSL2**: el launcher valida `wsl.exe`, detecta la distro y orquesta el arranque.
+- **Puente Windows ↔ WSLC**: el launcher valida `wsl.exe`, detecta la distro y orquesta el arranque del panel de contenedores.
 - **Packaging Windows**: Inno Setup para una instalación profesional sin admin.
 - **CI/CD**: build automatizado vía GitHub Actions al pushear un tag.
 - **Conciencia de seguridad**: política explícita de binario sin firma con medidas compensatorias.
@@ -299,6 +295,6 @@ Esta capa de distribución Windows demuestra:
 
 - [github-releases-distribution.md](github-releases-distribution.md)
 - [technical-audit.md](technical-audit.md)
+- [wslc-contenedores.md](wslc-contenedores.md)
 - [../README.md](../README.md)
-- [../RUNBOOK.md](../RUNBOOK.md)
 - [../CHANGELOG.md](../CHANGELOG.md)

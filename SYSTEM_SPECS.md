@@ -1,6 +1,6 @@
-# System Specs — WSL Labs
+# System Specs — WSL Container Center
 
-> **Versión**: 0.1.2
+> **Versión**: v1
 > **Estado**: Activo
 > **Uso recomendado**: Vista ejecutiva del sistema para entender capacidades y componentes sin entrar todavía al detalle técnico
 
@@ -10,64 +10,66 @@
 
 | Componente | Stack | Puerto principal | Estado esperado |
 | --- | --- | --- | --- |
-| Control Center | Node.js (`http` nativo, sin deps) | `9092` | Operativo |
+| Panel | Node.js (`http` nativo, sin deps) | `9092` | Operativo |
+| Motor de contenedores | `wslc` (WSL 2.9+, preview) | — | Operativo (requisito) |
+| Casos de contenedores | 12 casos portados de docker-labs (starter / platform / infra) | `8101`–`8114` | Operativo bajo demanda |
 | Launcher Windows | Go 1.21 (stdlib puro) | — | Operativo |
-| Servicios WSL2 | nginx / apache+php / node / flask / postgresql | `8080`–`8090`, `5432` | Operativo bajo demanda |
-| Catálogo | `labs.config.json` | — | Fuente única de verdad |
+| Catálogo | `containers/containers.config.json` | — | Fuente única de verdad |
 
 ## Capacidades visibles
 
 | Capacidad | Presencia |
 | --- | --- |
-| Instalar servicios Linux desde el panel (1-click) | Sí |
-| Arrancar / detener servicios en WSL | Sí |
-| Ver logs por servicio desde el panel | Sí |
-| Health-check TCP/HTTP en IPv4 e IPv6 | Sí |
-| Ejecución privilegiada sin contraseña (root) | Sí |
-| Keepalive de la instancia WSL | Sí |
+| Construir imágenes custom desde el panel (`wslc build`) | Sí |
+| Levantar / bajar contenedores con un clic (`wslc run` / `stop` + `rm`) | Sí |
+| Casos multi-contenedor sobre una red wslc dedicada | Sí |
+| Ver logs por caso desde el panel (`wslc logs`) | Sí |
+| Health-check HTTP en IPv4 e IPv6 | Sí |
+| Localización automática de `wslc.exe` | Sí |
+| Token opcional + rate-limit en la API | Sí |
 | Launcher Windows que abre el navegador | Sí |
 
 ## Rutas principales del usuario
 
 | Entrada | Uso |
 | --- | --- |
-| [http://localhost:9092](http://localhost:9092) | Control Center del workspace |
-| [http://localhost:8080](http://localhost:8080) | NGINX (lab 05) |
-| [http://localhost:8081](http://localhost:8081) | Apache + PHP (lab 06) |
-| [http://localhost:8082](http://localhost:8082) | Node API (lab 07) |
-| [http://localhost:8083](http://localhost:8083) | Flask (lab 08) |
-| `postgres://localhost:5432` | PostgreSQL (lab 09) |
-| [http://localhost:8090](http://localhost:8090) | Mini-servidor completo (lab 11) |
+| [http://localhost:9092](http://localhost:9092) | Panel del workspace |
+| [http://localhost:8101](http://localhost:8101) | API Node.js (caso 01) |
+| [http://localhost:8104](http://localhost:8104) | Nginx web (caso 06) |
+| [http://localhost:8106](http://localhost:8106) | API + PostgreSQL (caso 05) |
+| [http://localhost:8110](http://localhost:8110) | Prometheus + Grafana (caso 08) |
+| [http://localhost:8114](http://localhost:8114) | Jenkins CI (caso 12) |
 
 ## Rutas clave del repositorio
 
 | Ruta | Rol |
 | --- | --- |
-| `labs.config.json` | Catálogo — fuente única de verdad |
-| `dashboard-server/server.js` | Backend del Control Center |
+| `containers/containers.config.json` | Catálogo — fuente única de verdad |
+| `containers/NN-*/` | Contexto y `Dockerfile` de cada caso custom |
+| `dashboard-server/server.js` | Backend del panel (localiza y ejecuta `wslc.exe`) |
+| `index.html` · `dashboard.css` · `dashboard.js` | UI del panel |
 | `launcher/windows/main.go` | Launcher Windows (Go) |
-| `installer/wsl-labs.iss` | Instalador Inno Setup |
-| `scripts/install-*.sh` | Instaladores idempotentes por servicio |
-| `labs/NN-*/` | Los 12 labs (guías + configs) |
+| `installer/` | Instalador Inno Setup |
 
 ## Requisitos operativos recomendados
 
 | Escenario | Recomendación |
 | --- | --- |
-| Aprendizaje | Panel + labs de learning (sin servicios) |
-| Demo de servicios | Panel + `05` + `07` + `09` |
-| Stack combinado | Panel + `11` (mini-servidor) |
+| Primeros pasos | Panel + un caso starter (`01`, `06`) |
+| Demo de stacks | Panel + `05` (postgres) + `04` (redis) + `09` (mongo) |
+| Observabilidad / infra | Panel + `08` (Prometheus + Grafana) |
 
 ## Requisitos de base
 
-- Windows 10 (2004+) o Windows 11 con **WSL 2**
-- Una distro Linux (Ubuntu/Debian recomendada) con systemd
-- Node.js 18+ (Control Center) · Go 1.21+ (solo para compilar el launcher)
+- Windows 10 (2004+) o Windows 11 con **WSL 2.9+** y el motor `wslc`
+  (`wsl --update --pre-release`)
+- Node.js 18+ en **Windows** (para el panel) · Go 1.21+ (solo para compilar el launcher)
 - Git · PowerShell / Windows Terminal
 
 ## Documentos relacionados
 
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
 - [docs/TECHNICAL_SPECS.md](docs/TECHNICAL_SPECS.md)
-- [docs/LABS_CATALOG.md](docs/LABS_CATALOG.md)
+- [docs/wslc-contenedores.md](docs/wslc-contenedores.md)
+- [docs/DASHBOARD_SETUP.md](docs/DASHBOARD_SETUP.md)
 - [README.md](README.md)

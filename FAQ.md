@@ -7,91 +7,123 @@ Preguntas frecuentes sobre `wsl-labs`. Para operar, mira el
 
 ## 🚪 ¿Cuál es la entrada principal del repo?
 
-El **Control Center**: <http://localhost:9092>. Desde ahí instalas, levantas,
-detienes y revisas la salud de cada servicio.
-
----
-
-## 🔑 ¿El panel me pide contraseña?
-
-**No.** El Control Center ejecuta los comandos dentro de WSL como `root`
-(`wsl.exe -u root`), igual que Docker corre privilegiado. Windows ya autenticó
-al usuario, así que **no se pide contraseña** para instalar ni operar servicios.
-
-> [!NOTE]
-> El `setup-passwordless-sudo.sh` **solo** hace falta si operas por terminal con
-> `make up-*` como tu propio usuario (ver [OPERATING-MODES.md](OPERATING-MODES.md),
-> Modo 2). Para el panel no es necesario.
+El **panel**: <http://localhost:9092>. Desde ahí construyes, levantas, bajas y
+revisas los logs de cada **contenedor** (caso) del catálogo.
 
 ---
 
 ## 🐳 ¿Necesito Docker?
 
-**No.** `wsl-labs` no usa Docker en absoluto. Los servicios corren **nativos
-dentro de WSL2** (nginx, apache, postgresql como servicios de la distro; node y
-flask como unidades systemd). El parecido con Docker es solo la **experiencia**:
-un panel que instala y levanta con un clic.
+**No.** `wsl-labs` usa **`wslc`**, el motor de contenedores **nativo de WSL**
+(WSL 2.9+). No hay Docker Desktop ni daemon de Docker de por medio: `wslc`
+construye imágenes OCI y levanta contenedores por sí mismo, con una interfaz casi
+idéntica a la de Docker (`wslc build/run/logs/stop/rm/images/list/network`).
 
 ---
 
-## 🧩 ¿Funciona sin systemd?
+## 🧩 ¿Qué es `wslc`?
 
-Depende del servicio:
+Es el **runtime de contenedores integrado en WSL** que Microsoft añadió a partir
+de **WSL 2.9+**. El ejecutable vive en `C:\Program Files\WSL\wslc.exe` y se
+obtiene actualizando WSL a la rama preview:
 
-| Servicio | Mecanismo | ¿Necesita systemd? |
+```powershell
+wsl --update --pre-release
+wsl --version
+& "C:\Program Files\WSL\wslc.exe" version
+```
+
+> [!NOTE]
+> `wslc` está en **preview**. Si no aparece tras actualizar, reinicia WSL con
+> `wsl --shutdown` y vuelve a comprobarlo.
+
+---
+
+## 🔑 ¿El panel me pide contraseña?
+
+**No.** El panel ejecuta `wslc.exe` directamente en **Windows** (Windows ya
+autenticó al usuario). No usa `wsl -u root`, ni sudo, ni contraseñas para
+construir o levantar contenedores.
+
+---
+
+## 🕸️ ¿Puedo levantar varios contenedores y que se comuniquen?
+
+**Sí.** Un caso puede declarar varios contenedores y una **red `wslc`**. Los
+contenedores se resuelven por nombre dentro de esa red (DNS interno), igual que
+en Docker. Ejemplos del catálogo:
+
+| Caso | Contenedores | Red |
 | --- | --- | --- |
-| nginx, apache, postgresql | `sudo service …` | No |
-| node (`wsl-labs-node`), flask (`wsl-labs-flask`) | unidad systemd | **Sí** |
+| `04-redis-cache` | app Node + `redis:7-alpine` | `wslc-redis-net` |
+| `05-postgres-api` | app Python + `postgres:15` | `wslc-pg-net` |
+| `02-php-lamp` | PHP+Apache + `mariadb:10.6` | `wslc-lamp-net` |
+| `09-multi-service` | backend Node + `mongo:7` | `wslc-multi-net` |
+| `08-prometheus-grafana` | Prometheus + Grafana | `wslc-obs-net` |
+
+La app referencia a su dependencia por el nombre del contenedor (p. ej.
+`REDIS_HOST=wslc-redis`).
+
+---
+
+## 🐘 ¿Y los casos pesados como Elasticsearch o Jenkins?
+
+Están en el catálogo (`11-elasticsearch`, `12-jenkins`) y funcionan, pero
+**consumen bastante RAM**. Elasticsearch arranca con `ES_JAVA_OPTS=-Xms512m
+-Xmx512m`; Jenkins LTS también es exigente.
 
 > [!TIP]
-> Habilita systemd en `/etc/wsl.conf` (`[boot]` → `systemd=true`) y reinicia con
-> `wsl --shutdown`. El **lab 04** te guía en esto.
+> Levántalos de uno en uno y baja el resto de contenedores antes. En equipos con
+> poca memoria, ajusta el límite de RAM de WSL en `%UserProfile%\.wslconfig`.
 
 ---
 
-## 😴 ¿Se apaga WSL y matan los servicios?
+## 🗂️ ¿Y los servicios / labs antiguos (`wsl -u root`, `install-*.sh`)?
 
-WSL apaga la instancia cuando queda inactiva, lo que tumbaría los servicios.
-Para evitarlo, mientras el Control Center corre mantiene un **keepalive** que
-conserva viva la instancia WSL (como Docker Desktop con su VM). Así los
-servicios siguen accesibles desde `localhost`.
+**Retirados.** El repo ya **no** instala demonios dentro de la distro ni usa
+`wsl -u root`, passwordless sudo ni keepalive. Todo eso desapareció al pasar a
+contenedores con `wslc`.
 
----
-
-## 🌐 ¿Puedo exponerlo a la red?
-
-**No por diseño.** El Control Center escucha **solo en `127.0.0.1:9092`**. Dado
-que corre comandos en WSL como `root` sin contraseña, exponerlo sería un riesgo
-de seguridad. Mantenlo en `localhost` (ver [SECURITY.md](SECURITY.md)).
+Lo que **sí queda** es la documentación de **fundamentos de WSL** (`docs/00-05`,
+[historia y referencia](docs/wsl-historia-y-referencia.md), cheatsheets) como
+**contexto**: sirve para entender WSL, pero el foco operativo del repo son los
+contenedores.
 
 ---
 
 ## 🆘 ¿Qué hago si `:9092` no abre?
 
 ```powershell
-wsl --status                     # ¿WSL 2 activo?
+wsl --version                    # ¿WSL 2.9+?
+& "C:\Program Files\WSL\wslc.exe" version  # ¿wslc disponible?
 node --version                   # ¿Node ≥ 18 en Windows?
 node dashboard-server/server.js  # arranca el panel manualmente
 ```
 
-Si sigue sin abrir, revisa el **lab 12 (troubleshooting)** y
+Si sigue sin abrir, revisa [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) y
 [SUPPORT.md](SUPPORT.md).
 
 ---
 
-## 📦 ¿Cómo instalo un servicio?
+## 📦 ¿Cómo levanto un caso?
 
-Desde el panel: botón **📦 Instalar** en la tarjeta del servicio (corre su
-`install-*.sh` como root). Los instaladores son **idempotentes**: puedes
-re-instalar sin miedo. Luego pulsa **▶ Levantar**.
+Desde el panel, en la tarjeta del caso:
+
+1. **🔨 Construir** — solo la primera vez, si el caso tiene imagen propia.
+2. **▶ Levantar** — crea la red (si aplica) y arranca los contenedores.
+3. **📄 Logs** / **🛑 Bajar** cuando lo necesites.
+
+Los casos que usan imágenes oficiales (RabbitMQ, Prometheus/Grafana, Elastic,
+Jenkins) no necesitan Construir: pulsa directamente **Levantar**.
 
 ---
 
 ## 🪟 ¿Hay un `.exe`?
 
-Sí, el **launcher de Windows**. Descárgalo desde
-[Releases](https://github.com/vladimiracunadev-create/wsl-labs/releases):
-verifica WSL2, arranca el Control Center y abre el navegador por ti.
+Sí, el **launcher de Windows** (Go). Descárgalo desde
+[Releases](https://github.com/vladimiracunadev-create/wsl-labs/releases): verifica
+WSL, arranca el panel y abre el navegador por ti. El instalador se empaqueta con
+**Inno Setup**.
 
 > [!NOTE]
 > El instalador **no está firmado** en v0.x. Si SmartScreen avisa, elige
@@ -101,15 +133,14 @@ verifica WSL2, arranca el Control Center y abre el navegador por ti.
 
 ## 🔀 ¿En qué se diferencia de `docker-labs`?
 
-Comparten arquitectura (Control Center web + launcher Windows + servicios en
-`localhost`), pero la capa técnica es distinta:
+`wsl-labs` **porta 12 casos de `docker-labs`** al motor `wslc`. Comparten la idea
+(panel web + casos de contenedor + launcher Windows), pero cambia el motor:
 
 | | `wsl-labs` | `docker-labs` |
 | --- | --- | --- |
-| Motor | 🐧 **WSL2** (Linux nativo en Windows) | 🐳 **Docker** (contenedores) |
-| Servicios | systemd / `service` en la distro | contenedores + Compose |
-| Panel | Node.js `:9092` | dashboard dockerizado |
-| Aislamiento | Una distro compartida | Un contenedor por servicio |
+| Motor | 🐳 **`wslc`** (contenedores nativos de WSL) | 🐳 **Docker** (Docker Engine) |
+| Requisito | WSL 2.9+ (`wsl --update --pre-release`) | Docker Desktop / Engine |
+| Orquestación | Catálogo `wslc` + panel Node.js | `docker compose` + panel |
 
 > [!NOTE]
 > `wsl-labs`, [`docker-labs`](https://github.com/vladimiracunadev-create/docker-labs)
@@ -120,8 +151,8 @@ Comparten arquitectura (Control Center web + launcher Windows + servicios en
 
 ## ☁️ ¿Sirve para cloud o Kubernetes?
 
-**No.** `wsl-labs` es **local only**: montar y aprender servicios Linux en tu
-Windows. No cubre despliegues cloud ni orquestación con k8s.
+**No.** `wsl-labs` es **local only**: construir y levantar contenedores en tu
+Windows con `wslc`. No cubre despliegues cloud ni orquestación con k8s.
 
 ---
 

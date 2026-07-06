@@ -1,4 +1,4 @@
-# 🔀 COMPATIBILITY — WSL Control Center v1
+# 🔀 COMPATIBILITY — WSL Container Center
 
 > Plataformas soportadas, matriz de validación y riesgos operativos.
 > Para el setup, consulta [ENVIRONMENT_SETUP.md](ENVIRONMENT_SETUP.md).
@@ -9,11 +9,11 @@
 
 La experiencia principal está diseñada para:
 
-- 🪟 **Windows 11** (o Windows 10 2004+) con **WSL2** habilitado
-- 🐧 **Ubuntu o Debian** dentro de WSL2
-- 🟢 **Node.js 18+** en el PATH de **Windows** (para el Control Center)
+- 🪟 **Windows 11** (o Windows 10 2004+) con **WSL2**
+- 🐳 **WSL 2.9+** con el motor de contenedores **`wslc`** (rama preview)
+- 🟢 **Node.js 18+** en el PATH de **Windows** (para el panel)
 - 🚀 **Go 1.21+** (solo para compilar el launcher)
-- 🌐 Control Center en `localhost:9092` como capa de control
+- 🌐 Panel en `localhost:9092` como capa de control
 
 ---
 
@@ -22,8 +22,8 @@ La experiencia principal está diseñada para:
 | Componente | Mínimo soportado | Recomendado | Notas |
 | --- | --- | --- | --- |
 | 🪟 Windows | 10 versión **2004** (build 19041) | Windows 11 | WSL2 requiere 2004+ |
-| 🐧 WSL | **WSL 2** | WSL 2 | WSL 1 no soporta la topología de servicios |
-| 🐧 Distro | Ubuntu 20.04 / Debian 11 | Ubuntu 22.04+ | Otras distros: parcial |
+| 🐧 WSL | **WSL 2.9+** | Última preview | `wslc` solo existe en 2.9+ (`wsl --update --pre-release`) |
+| 🐳 Motor `wslc` | preview | preview | `C:\Program Files\WSL\wslc.exe` |
 | 🟢 Node.js | **18 LTS** | 20 LTS+ | Corre en Windows, sin deps npm |
 | 🚀 Go | **1.21** | 1.22+ | Solo para compilar el launcher |
 | 🌐 Navegador | Cualquiera moderno | Edge / Chrome | Para abrir `:9092` |
@@ -32,13 +32,12 @@ La experiencia principal está diseñada para:
 
 ## 🧩 Matriz de plataformas
 
-| Plataforma | Control Center | Launcher | Servicios | Notas |
+| Plataforma | Panel | Launcher | Contenedores `wslc` | Notas |
 | --- | :---: | :---: | :---: | --- |
-| 🪟 Windows 11 + WSL2 | ✅ | ✅ | ✅ | **Ruta principal validada** |
-| 🪟 Windows 10 2004+ + WSL2 | 🟡 | 🟡 | 🟡 | Compatible, no validado explícitamente |
-| 🐧 Linux nativo | 🟡 | ❌ | ✅ | Útil para probar servicios directamente |
-| 🍎 macOS | 🟡 | ❌ | 🟡 | Solo lectura y desarrollo parcial |
-| ☁️ Linux en CI (Actions) | 🟡 | ✅ | 🟡 | Build del launcher validado |
+| 🪟 Windows 11 + WSL 2.9+ | ✅ | ✅ | ✅ | **Ruta principal validada** |
+| 🪟 Windows 10 2004+ + WSL 2.9+ | 🟡 | 🟡 | 🟡 | Compatible, no validado explícitamente |
+| 🪟 Windows + WSL < 2.9 | ❌ | ❌ | ❌ | Sin motor `wslc`: actualiza con `--pre-release` |
+| 🍎 macOS / 🐧 Linux nativo | 🟡 | ❌ | ❌ | `wslc` es específico de WSL; solo lectura de docs |
 
 **Leyenda:** ✅ validado · 🟡 parcial / no validado · ❌ no soportado
 
@@ -46,90 +45,71 @@ La experiencia principal está diseñada para:
 
 ## 🔧 Requisitos de operación
 
-El dashboard ejecuta los comandos dentro de WSL **como `root`** vía
-`wsl.exe -d Ubuntu -u root -- …`, así que **no requiere passwordless sudo**: nunca
-pide contraseña (igual que Docker corre privilegiado). Desde el panel basta:
+El panel ejecuta `wslc.exe` directamente en **Windows** (`wslc build/run/logs/…`).
+**No requiere passwordless sudo, `wsl -u root` ni contraseñas**: Windows ya
+autenticó al usuario. Desde el panel basta:
 
-1. **📦 Instalar** — el botón corre el `install-*.sh` del servicio como `root`
-   (endpoint `POST /api/wsl/install`).
-2. **▶ Levantar** — arranca el servicio, sin contraseña.
+1. **🔨 Construir** — construye la imagen del caso (solo si tiene `Dockerfile`)
+   vía `POST /api/wslc/build`.
+2. **▶ Levantar** — crea la red (si aplica) y arranca los contenedores vía
+   `POST /api/wslc/up`.
 
-| Servicio | Lab | Puerto | Desde el panel (root) | passwordless sudo |
-| --- | :---: | ---: | :---: | :---: |
-| 🌐 nginx | 05 | 8080 | ✅ 1-click | opcional (solo terminal) |
-| 🐘 apache + php | 06 | 8081 | ✅ 1-click | opcional (solo terminal) |
-| 🗄️ postgresql | 09 | 5432 | ✅ 1-click | opcional (solo terminal) |
-| 🟢 node API | 07 | 8082 | ✅ 1-click | no aplica (sin `sudo`) |
-| 🐍 flask | 08 | 8083 | ✅ 1-click | no aplica (sin `sudo`) |
+| Requisito | Detalle |
+| --- | --- |
+| `wslc` disponible | `C:\Program Files\WSL\wslc.exe` (o `WSL_LABS_WSLC`) |
+| WSL actualizado | `wsl --update --pre-release` deja WSL en 2.9+ con `wslc` |
+| Node en Windows | El panel corre en Windows, no dentro de WSL |
 
 > [!IMPORTANT]
-> `scripts/setup-passwordless-sudo.sh` **ya no es requisito del dashboard**. Solo
-> es útil si ejecutas los targets `make up-*` desde una terminal **como tu propio
-> usuario** (no `root`), porque en ese flujo el arranque usa `sudo service …`.
+> Si `wslc` no aparece tras actualizar, reinicia WSL con `wsl --shutdown` y
+> vuelve a comprobar con `& "C:\Program Files\WSL\wslc.exe" version`.
 
 ---
 
-## 🪟 Windows + WSL2 — Ruta principal
+## 🪟 Windows + WSL — Ruta principal
 
 Es la ruta del producto. En esta iteración se valida:
 
-- ✅ Control Center en `localhost:9092`
-- ✅ Detección de `Ubuntu` con `wsl.exe -l -q`
-- ✅ Arranque de nginx con `sudo service nginx start`
-- ✅ Respuesta real en `http://localhost:8080`
-- ✅ Health `http`/`tcp` de los servicios del catálogo
+- ✅ Panel en `localhost:9092`
+- ✅ Localización de `wslc.exe` en `C:\Program Files\WSL\wslc.exe`
+- ✅ Construcción de imágenes propias (`wslc build`)
+- ✅ Levantado de contenedores y stacks con red (`wslc run` + `wslc network`)
+- ✅ Respuesta real en el puerto host de cada caso (HTTP 200)
 
 ### Repo en filesystem Windows
 
 ```text
-C:\dev\wsl-labs   →   /mnt/c/dev/wsl-labs (desde WSL)
+C:\dev\wsl-labs
 ```
 
-El Control Center hace esa conversión automáticamente y exporta `WSL_LABS_ROOT`.
-
-### Repo en filesystem Linux
-
-Buena opción para trabajo prolongado desde WSL (I/O más rápida en `~`).
+El `wslc build` recibe el contexto (`containers/NN-nombre`) directamente desde el
+panel, que corre en Windows.
 
 ---
 
 ## ⚠️ Riesgos conocidos
 
 > [!CAUTION]
-> Estos riesgos pueden impedir el arranque de los servicios:
+> Estos riesgos pueden impedir el arranque de los contenedores:
 
 | # | Riesgo | Impacto | Mitigación |
 | --- | --- | --- | --- |
-| 1 | **systemd no habilitado** en la distro | 🟠 Alto | Usar `sudo service <x> start` (ya es el default del catálogo) o habilitar systemd en `/etc/wsl.conf` con `[boot]\nsystemd=true` |
-| 2 | **`sudo` pide contraseña** para servicios | 🟠 Alto | Configurar `sudoers` sin password para los servicios usados (ver abajo) |
-| 3 | WSL en **versión 1** | 🔴 Crítico | Convertir con `wsl --set-version <distro> 2` |
-| 4 | **Node.js dentro de WSL**, no en Windows | 🔴 Crítico | El Control Center corre en Windows; instala Node en Windows |
-| 5 | **Colisión de puertos** en localhost | 🟠 Alto | Verificar con `netstat -ano \| findstr <puerto>` |
-| 6 | Paquetes de servicio no instalados | 🟡 Medio | Ejecutar `scripts/install-base.sh` dentro de WSL |
-| 7 | Virtualización deshabilitada en BIOS | 🔴 Crítico | Habilitar VT-x/AMD-V y la característica "Plataforma de máquina virtual" |
-
-### 🔑 sudoers sin password (opcional)
-
-Para que el Control Center arranque servicios sin que `sudo` pida contraseña,
-añade dentro de WSL (`sudo visudo`):
-
-```text
-tu_usuario ALL=(ALL) NOPASSWD: /usr/sbin/service, /usr/bin/service
-```
-
-> [!WARNING]
-> `NOPASSWD` reduce la fricción operativa pero relaja la seguridad local.
-> Limítalo a los binarios `service` estrictamente necesarios.
+| 1 | **`wslc` en preview** | 🟠 Alto | Es tecnología en evolución; puede cambiar entre versiones de WSL. Fija tu versión con `wsl --version` |
+| 2 | **WSL < 2.9 (sin `wslc`)** | 🔴 Crítico | Actualiza con `wsl --update --pre-release` y reinicia con `wsl --shutdown` |
+| 3 | **Imágenes pesadas (RAM)** | 🟠 Alto | Elasticsearch y Jenkins consumen mucha memoria; levántalos de uno en uno y ajusta `%UserProfile%\.wslconfig` |
+| 4 | **Node.js dentro de WSL**, no en Windows | 🔴 Crítico | El panel corre en Windows; instala Node en Windows |
+| 5 | **Colisión de puertos** en localhost | 🟠 Alto | Verifica con `netstat -ano \| findstr <puerto>`; los casos parten de `8100` |
+| 6 | **Virtualización deshabilitada en BIOS** | 🔴 Crítico | Habilita VT-x/AMD-V y "Plataforma de máquina virtual" |
 
 ---
 
 ## 📐 Reglas de diseño
 
-- La UX principal se cuenta **desde Windows**
-- El runtime real sigue siendo **Linux (WSL2)**
-- Los puertos deben ser **estables** (ver [RUNBOOK.md](RUNBOOK.md))
-- `labs.config.json` es la **fuente de verdad**
-- El launcher sigue el mismo catálogo y la misma topología de `localhost`
+- La UX principal se cuenta **desde Windows** (panel + launcher).
+- El runtime real son **contenedores `wslc`** sobre WSL 2.9+.
+- Los puertos host deben ser **estables** (ver [RUNBOOK.md](RUNBOOK.md)).
+- `containers/containers.config.json` es la **fuente de verdad**.
+- El launcher sigue el mismo catálogo y la misma topología de `localhost`.
 
 ---
 

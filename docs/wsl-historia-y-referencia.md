@@ -370,8 +370,7 @@ wsl --export Ubuntu .\ubuntu-backup.tar
 wsl --import Ubuntu-Lab .\Ubuntu-Lab .\ubuntu-backup.tar --version 2
 ```
 
-Más detalle en el lab [`labs/10-backup-export-import/`](../labs/10-backup-export-import/)
-y en el [cheatsheet](../cheatsheets/comandos-wsl.md).
+Más detalle en el [cheatsheet de comandos WSL](../cheatsheets/comandos-wsl.md).
 
 ### 🧭 Ejemplos reales de `wsl-labs`
 

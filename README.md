@@ -1,39 +1,32 @@
-# 🐧 wsl-labs
+# 🐳 wsl-labs — WSL Container Center
 
-![WSL Control Center](assets/branding/cover.svg)
-
-**Suite de laboratorios para montar, administrar y automatizar sistemas Linux
-con Windows Subsystem for Linux (WSL 2)** — con Control Center web, launcher de
-Windows y servicios reales publicados en `localhost`.
+**Levanta y controla contenedores en Windows con `wslc`**, el motor de contenedores
+nativo de WSL. Panel de control web + launcher, con casos reales portados de
+`docker-labs` — pero sin Docker Desktop.
 
 [![Docs](https://github.com/vladimiracunadev-create/wsl-labs/actions/workflows/docs.yml/badge.svg)](https://github.com/vladimiracunadev-create/wsl-labs/actions/workflows/docs.yml)
 [![Dashboard](https://github.com/vladimiracunadev-create/wsl-labs/actions/workflows/dashboard.yml/badge.svg)](https://github.com/vladimiracunadev-create/wsl-labs/actions/workflows/dashboard.yml)
 [![Build Windows](https://github.com/vladimiracunadev-create/wsl-labs/actions/workflows/build-windows.yml/badge.svg)](https://github.com/vladimiracunadev-create/wsl-labs/actions/workflows/build-windows.yml)
 [![Release](https://img.shields.io/github/v/release/vladimiracunadev-create/wsl-labs?sort=semver)](https://github.com/vladimiracunadev-create/wsl-labs/releases)
 ![Platform](https://img.shields.io/badge/Platform-Windows%2011%20%2B%20WSL2-orange)
+![Engine](https://img.shields.io/badge/Engine-wslc-blue)
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 
 > [!NOTE]
-> `wsl-labs` es parte de una línea de laboratorios sobre **tecnologías para
-> montar sistemas**, junto a
-> [`docker-labs`](https://github.com/vladimiracunadev-create/docker-labs) (contenedores)
-> y [`unikernel-labs`](https://github.com/vladimiracunadev-create/unikernel-labs) (unikernels).
-> Los tres comparten arquitectura: Control Center web + launcher Windows + servicios en localhost.
+> Desde WSL 2.9, WSL trae **WSLC** (`wslc`): un motor de contenedores nativo, tipo
+> Docker (imágenes, contenedores, redes, volúmenes). `wsl-labs` es un **centro de
+> control de contenedores** sobre `wslc` — el equivalente WSL de un panel Docker.
 
 ---
 
 ## 🗺️ Qué es este repo
 
-WSL no es solo una terminal Linux dentro de Windows: es una plataforma para
-levantar **servicios reales** (web, apps, bases de datos) accesibles desde
-`localhost` de Windows. Este repo lo convierte en un panel operable:
-
 | Pieza | Rol |
-| ------- | ----- |
-| 🧭 **Control Center** (Node.js, `:9092`) | Arranca/detiene servicios WSL y muestra su salud |
-| 🪟 **Launcher Windows** (Go `.exe`) | Detecta la distro, levanta el stack y abre el navegador |
-| 🐧 **12 labs** (`labs/NN-*`) | Guías paso a paso: instalación, systemd, nginx, apache, node, python, postgres, backup… |
-| 📇 **`labs.config.json`** | Fuente única de verdad del catálogo (puertos, comandos, health) |
+|-------|-----|
+| 🧭 **Panel** (Node.js, `:9092`) | Construye, levanta, detiene y supervisa contenedores |
+| 🪟 **Launcher Windows** (Go `.exe`) | Arranca el panel y abre el navegador |
+| 🐳 **12 casos** (`containers/NN-*`) | Stacks reales portados de `docker-labs`, con imágenes propias |
+| 📇 **`containers.config.json`** | Fuente única de verdad (imágenes, puertos, redes, comandos) |
 
 ### Arquitectura
 
@@ -42,18 +35,17 @@ flowchart LR
     subgraph WIN["🪟 Windows 11"]
         L["Launcher .exe"]
         B["Navegador"]
-        D["🧭 Control Center<br/>Node.js :9092"]
+        D["🧭 Panel<br/>Node.js :9092"]
     end
-    subgraph WSL["🐧 WSL2 · Ubuntu"]
-        N["nginx :8080"]
-        A["apache+php :8081"]
-        NO["node :8082"]
-        P["flask :8083"]
-        PG["postgresql :5432"]
+    subgraph WSLC["🐳 Motor de contenedores (wslc)"]
+        C1["contenedor · app"]
+        C2["contenedor · base de datos"]
+        N(["red wslc"])
+        C1 --- N --- C2
     end
     L --> D
     B --> D
-    D -->|wsl.exe -d Ubuntu| WSL
+    D -->|wslc.exe| WSLC
 ```
 
 ---
@@ -61,176 +53,73 @@ flowchart LR
 ## 🚀 Quickstart
 
 ```powershell
-# 1. Instalar WSL 2 + Ubuntu (reinicia si es la primera vez)
+# 1. WSL 2 + habilitar wslc (canal preview, trae el motor de contenedores)
 wsl --install
+wsl --update --pre-release
 
 # 2. Clonar el repo
 git clone https://github.com/vladimiracunadev-create/wsl-labs.git
 cd wsl-labs
 
-# 3. Preparar la distro (dentro de WSL)
-wsl bash scripts/install-base.sh
-
-# 4. Levantar el Control Center
+# 3. Levantar el panel
 make serve            # o: node dashboard-server/server.js
 ```
 
-Abre **<http://localhost:9092>** y controla los servicios desde el panel.
-El panel instala y levanta cada servicio con un clic, como Docker (corre
-privilegiado en WSL, sin contraseñas): **📦 Instalar → ▶ Levantar**.
+Abre **<http://localhost:9092>**. Por cada caso: **📦 Construir → ▶ Levantar → 🌐 Abrir**.
 
 > [!TIP]
 > ¿Prefieres un `.exe`? Descarga el **Launcher** desde
-> [Releases](https://github.com/vladimiracunadev-create/wsl-labs/releases): levanta
-> el stack y abre el navegador por ti.
+> [Releases](https://github.com/vladimiracunadev-create/wsl-labs/releases).
 
 ---
 
-## 🌐 Servicios en localhost
+## 🐳 Casos de contenedores
 
-| Servicio | Lab | Puerto | URL |
-| ---------- | ----- | :------: | ----- |
-| 🧭 Control Center | — | 9092 | <http://localhost:9092> |
-| 🌐 NGINX | 05 | 8080 | <http://localhost:8080> |
-| 🐘 Apache + PHP | 06 | 8081 | <http://localhost:8081> |
-| 🟢 Node API | 07 | 8082 | <http://localhost:8082> |
-| 🐍 Flask | 08 | 8083 | <http://localhost:8083> |
-| 🗄️ PostgreSQL | 09 | 5432 | `postgres://localhost:5432` |
+Portados de [`docker-labs`](https://github.com/vladimiracunadev-create/docker-labs),
+ejecutados con `wslc`. Los `platform` son multi-contenedor (app + base de datos por una red).
 
-> [!NOTE]
-> **Dos enfoques complementarios.** Arriba, **servicios** = demonios Linux dentro
-> de la distro (nginx/apache/…). Además, el repo tiene un track de **contenedores
-> reales** con **WSLC** (`wslc`, el motor de contenedores nativo de WSL): imágenes
-> construidas desde Dockerfiles, en `localhost:8091-8093`. Ver
-> [🐳 Contenedores (WSLC)](docs/wslc-contenedores.md).
-
----
-
-## 🐳 Contenedores (WSLC) — imágenes reales
-
-Desde **WSL 2.9+**, WSL trae **WSLC**, un motor de contenedores nativo (tipo
-Docker) con `wslc`. Este repo incluye **imágenes reales** construidas desde
-Dockerfiles, operables desde el mismo panel (📦 Construir → ▶ Ejecutar):
-
-| Imagen | Base | Puerto | URL |
-| ------ | ---- | :----: | --- |
-| `wsl-labs/web-nginx` | `nginx:alpine` | 8091 | <http://localhost:8091> |
-| `wsl-labs/node-api` | `node:20-alpine` | 8092 | <http://localhost:8092> |
-| `wsl-labs/python-flask` | `python:3.12-alpine` | 8093 | <http://localhost:8093> |
-
-> [!TIP]
-> `wslc` es preview: si no lo tienes, actualiza WSL con `wsl --update --pre-release`.
-> Guía completa: [docs/wslc-contenedores.md](docs/wslc-contenedores.md) · Lab:
-> [labs/13-wslc-contenedores](labs/13-wslc-contenedores/).
-
----
-
-## 🧪 Labs disponibles
-
-| # | Lab | Tipo | Estado | Puerto |
-| --- | ----- | ------ | :------: | :------: |
-| 01 | [Instalación Ubuntu](labs/01-instalacion-ubuntu/) | 📚 learning | ✅ | — |
-| 02 | [Comandos base WSL](labs/02-comandos-base-wsl/) | 📚 learning | ✅ | — |
-| 03 | [Sistema de archivos](labs/03-sistema-de-archivos/) | 📚 learning | ✅ | — |
-| 04 | [systemd y servicios](labs/04-systemd-servicios/) | 📚 learning | ✅ | — |
-| 05 | [Servidor web NGINX](labs/05-servidor-web-nginx/) | ⚙️ service | ✅ | 8080 |
-| 06 | [Apache + PHP](labs/06-servidor-apache-php/) | ⚙️ service | ✅ | 8081 |
-| 07 | [Node.js entorno dev](labs/07-nodejs-entorno-dev/) | ⚙️ service | ✅ | 8082 |
-| 08 | [Python entorno dev](labs/08-python-entorno-dev/) | ⚙️ service | ✅ | 8083 |
-| 09 | [PostgreSQL en WSL](labs/09-postgresql-en-wsl/) | ⚙️ service | ✅ | 5432 |
-| 10 | [Backup export/import](labs/10-backup-export-import/) | 📚 learning | ✅ | — |
-| 11 | [Mini-servidor completo](labs/11-mini-servidor-completo/) | ⚙️ service | ✅ | 8090 |
-| 12 | [Troubleshooting](labs/12-troubleshooting/) | 📚 learning | ✅ | — |
-| 13 | [Contenedores WSLC](labs/13-wslc-contenedores/) | 🐳 container | ✅ | 8091-8093 |
+| # | Caso | Categoría | Stack | Puerto |
+|---|------|-----------|-------|:------:|
+| 01 | [node-api](containers/01-node-api/) | starter | Node.js | 8101 |
+| 02 | [php-lamp](containers/02-php-lamp/) | platform | PHP + MariaDB | 8107 |
+| 03 | [python-api](containers/03-python-api/) | starter | Flask | 8102 |
+| 04 | [redis-cache](containers/04-redis-cache/) | platform | Node + Redis | 8105 |
+| 05 | [postgres-api](containers/05-postgres-api/) | platform | Python + PostgreSQL | 8106 |
+| 06 | [nginx-web](containers/06-nginx-web/) | starter | Nginx | 8104 |
+| 07 | [rabbitmq](containers/07-rabbitmq/) | infra | RabbitMQ | 8109 |
+| 08 | [prometheus-grafana](containers/08-prometheus-grafana/) | infra | Prometheus + Grafana | 8110 |
+| 09 | [multi-service](containers/09-multi-service/) | platform | Node + MongoDB | 8112 |
+| 10 | [go-api](containers/10-go-api/) | starter | Go | 8103 |
+| 11 | [elasticsearch](containers/11-elasticsearch/) | infra | Elasticsearch 8 | 8113 |
+| 12 | [jenkins](containers/12-jenkins/) | infra | Jenkins LTS | 8114 |
 
 ---
 
 ## 📖 Documentación
 
-> [!TIP]
-> ¿No sabes por dónde empezar? Abre el **[📗 índice maestro](docs/DOCUMENTATION_INDEX.md)**.
-> Abajo tienes el índice completo — **todos** los documentos del repo enlazados.
+Empieza por el **[📗 índice maestro](docs/DOCUMENTATION_INDEX.md)**.
 
-### 🚀 Inicio y operación
+| Área | Documentos |
+|------|-----------|
+| 🚀 Uso | [INSTALL](docs/INSTALL.md) · [USER_MANUAL](docs/USER_MANUAL.md) · [DASHBOARD_SETUP](docs/DASHBOARD_SETUP.md) · [RUNBOOK](RUNBOOK.md) · [TROUBLESHOOTING](docs/TROUBLESHOOTING.md) |
+| 🏗️ Técnico | [ARCHITECTURE](docs/ARCHITECTURE.md) · [TECHNICAL_SPECS](docs/TECHNICAL_SPECS.md) · [Catálogo de casos](docs/LABS_CATALOG.md) · [Runtime reference](docs/LABS_RUNTIME_REFERENCE.md) · [TOOLING](docs/TOOLING.md) |
+| 🐳 Contenedores | [Guía wslc](docs/wslc-contenedores.md) · [Mapping docker-labs → wslc](docs/mapping-from-docker-labs.md) |
+| 🐧 WSL (contexto) | [Historia y comandos de WSL](docs/wsl-historia-y-referencia.md) · [¿Qué es WSL?](docs/00-que-es-wsl.md) · [Cheatsheets](cheatsheets/) |
+| 🪟 Distribución | [windows-installer](docs/windows-installer.md) · [Releases](docs/github-releases-distribution.md) |
+| 📈 Gobernanza | [PROJECT_STATUS](PROJECT_STATUS.md) · [ROADMAP](ROADMAP.md) · [CHANGELOG](CHANGELOG.md) · [CONTRIBUTING](CONTRIBUTING.md) · [SECURITY](SECURITY.md) · [RECRUITER](RECRUITER.md) |
 
-| Documento | Para quién |
-|-----------|-----------|
-| [docs/BEGINNERS_GUIDE.md](docs/BEGINNERS_GUIDE.md) | Introducción para novatos |
-| [docs/INSTALL.md](docs/INSTALL.md) | Instalación end-to-end |
-| [docs/REQUIREMENTS.md](docs/REQUIREMENTS.md) | Requisitos del host y WSL |
-| [ENVIRONMENT_SETUP.md](ENVIRONMENT_SETUP.md) | Preparar Windows + WSL2 paso a paso |
-| [docs/USER_MANUAL.md](docs/USER_MANUAL.md) | Uso diario del panel + API REST |
-| [docs/DASHBOARD_SETUP.md](docs/DASHBOARD_SETUP.md) | Arquitectura y operación del Control Center |
-| [OPERATING-MODES.md](OPERATING-MODES.md) | Modos de uso (panel, terminal, launcher) |
-| [RUNBOOK.md](RUNBOOK.md) | Operación diaria y respuesta rápida |
-| [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) | Problemas comunes → solución |
-
-### 🏗️ Arquitectura y referencia técnica
-
-| Documento | Para quién |
-|-----------|-----------|
-| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Arquitectura Windows ↔ WSL2 |
-| [docs/TECHNICAL_SPECS.md](docs/TECHNICAL_SPECS.md) | Stacks, puertos, endpoints, contratos |
-| [SYSTEM_SPECS.md](SYSTEM_SPECS.md) | Vista corta de componentes |
-| [docs/LABS_CATALOG.md](docs/LABS_CATALOG.md) | Rol de los 12 labs |
-| [docs/LABS_RUNTIME_REFERENCE.md](docs/LABS_RUNTIME_REFERENCE.md) | Servicio, puerto, health y RAM por lab |
-| [FILE_ARCHITECTURE.md](FILE_ARCHITECTURE.md) | Mapa de carpetas |
-| [docs/TOOLING.md](docs/TOOLING.md) | Herramientas de runtime, dev y CI |
-| [COMPATIBILITY.md](COMPATIBILITY.md) | Compatibilidad por SO y modo |
-| [GLOSSARY.md](GLOSSARY.md) | Glosario de términos |
-
-### 🐧 Fundamentos y referencia de WSL
-
-| Documento | Para quién |
-|-----------|-----------|
-| [docs/wsl-historia-y-referencia.md](docs/wsl-historia-y-referencia.md) | **Historia de WSL, por qué existe y referencia completa de comandos** |
-| [docs/wslc-contenedores.md](docs/wslc-contenedores.md) | **Contenedores WSLC: imágenes reales con `wslc` (tipo Docker)** |
-| [docs/00-que-es-wsl.md](docs/00-que-es-wsl.md) | ¿Qué es WSL? |
-| [docs/01-instalacion-wsl.md](docs/01-instalacion-wsl.md) | Instalar y configurar WSL 2 |
-| [docs/02-comandos-basicos.md](docs/02-comandos-basicos.md) | Comandos básicos |
-| [docs/03-wsl-vs-docker-vs-vm.md](docs/03-wsl-vs-docker-vs-vm.md) | WSL vs Docker vs VM |
-| [docs/04-buenas-practicas.md](docs/04-buenas-practicas.md) | Buenas prácticas |
-| [cheatsheets/](cheatsheets/) | Chuletas: WSL, Linux, systemd, redes |
-
-### 🪟 Distribución Windows
-
-| Documento | Para quién |
-|-----------|-----------|
-| [docs/windows-installer.md](docs/windows-installer.md) | Instalar y compilar el `.exe` |
-| [docs/github-releases-distribution.md](docs/github-releases-distribution.md) | Distribución por GitHub Releases |
-| [docs/technical-audit.md](docs/technical-audit.md) | Auditoría técnica y correcciones |
-
-### 📈 Estado, release y gobernanza
-
-| Documento | Para quién |
-|-----------|-----------|
-| [PROJECT_STATUS.md](PROJECT_STATUS.md) | Estado consolidado |
-| [ROADMAP.md](ROADMAP.md) · [docs/05-roadmap.md](docs/05-roadmap.md) | Hacia dónde va el proyecto |
-| [CHANGELOG.md](CHANGELOG.md) | Historial de cambios |
-| [RELEASE.md](RELEASE.md) | Checklist de release |
-| [SECURITY.md](SECURITY.md) | Modelo de confianza y reporte |
-| [CONTRIBUTING.md](CONTRIBUTING.md) | Cómo añadir un lab |
-| [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) | Normas de convivencia |
-| [SUPPORT.md](SUPPORT.md) | Cómo obtener ayuda |
-| [DEVELOPING.md](DEVELOPING.md) | Extender y mantener el repo |
-| [docs/MAINTAINERS.md](docs/MAINTAINERS.md) | Responsabilidades del mantenedor |
-
-### 👀 Evaluación y paridad
-
-| Documento | Para quién |
-|-----------|-----------|
-| [RECRUITER.md](RECRUITER.md) | Recorrido de 5 min para reclutadores |
-| [docs/PLAN_PARIDAD.md](docs/PLAN_PARIDAD.md) | Plan de paridad con los repos hermanos |
-| [docs/mapping-from-docker-labs.md](docs/mapping-from-docker-labs.md) | Equivalencias Docker → WSL |
+> [!NOTE]
+> **WSL como contexto:** WSL es la plataforma que hace posible `wslc`. Su historia,
+> fundamentos y comandos se conservan como **documentación** (no como el foco
+> operativo del repo). Ver [docs/wsl-historia-y-referencia.md](docs/wsl-historia-y-referencia.md).
 
 ---
 
 ## 🧱 Requisitos
 
-- Windows 10 (2004+) o Windows 11 · **WSL 2**
-- Una distro Linux (Ubuntu/Debian recomendada)
-- Node.js 18+ (para el Control Center) · Go 1.21+ (solo para compilar el launcher)
-- Git · PowerShell / Windows Terminal
+- Windows 10 (2004+) o Windows 11 · **WSL 2.9+** con `wslc` (`wsl --update --pre-release`)
+- Node.js 18+ (panel) · Go 1.21+ (solo para compilar el launcher)
+- RAM holgada para los casos pesados (Elasticsearch, Jenkins)
 
 ---
 

@@ -1,9 +1,9 @@
 # 🔀 Mapeo desde docker-labs
 
 > Cómo se traduce cada concepto de `docker-labs` a su equivalente en `wsl-labs`.
-> El **motor cambia** (Docker/Compose → WSL2 + servicios Linux nativos), pero la
-> arquitectura de producto es la misma. Para el contexto completo, consulta el
-> [README.md](../README.md).
+> El **motor cambia** (Docker/Compose → **WSLC**, el motor de contenedores nativo de
+> WSL), pero el modelo es el mismo: imágenes OCI, contenedores, redes y puertos.
+> Para el contexto completo, consulta el [README.md](../README.md).
 
 ---
 
@@ -11,34 +11,36 @@
 
 | Aspecto | Descripción |
 | --- | --- |
-| 📁 Estructura por labs | Directorio numerado `NN-nombre-kebab` por servicio o tema |
-| 📖 Narrativa del repo | Aprendizaje progresivo, bien documentado |
+| 📁 Estructura por casos | Directorio numerado `NN-nombre-kebab` por caso |
+| 🐳 Contenedores reales | Imágenes OCI por capas desde `Dockerfile`, no emulación |
 | 🏠 Operación local | Sin dependencias de cloud para el flujo principal |
-| 🌐 Foco en `localhost` | Los servicios se exponen en puertos locales |
-| 🧭 Control Center web | Panel Node.js que gobierna todo desde un puerto |
+| 🌐 Foco en `localhost` | Los contenedores publican puertos con `-p host:container` |
+| 🧭 Panel web | Panel Node.js que gobierna todo desde `:9092` |
 | 🚀 Launcher Windows (Go) | Un `.exe` que levanta la plataforma y abre el browser |
-| 📇 Catálogo fuente de verdad | Un solo archivo define puertos, comandos y health |
+| 📇 Catálogo fuente de verdad | Un solo archivo define imágenes, puertos, redes y health |
 
 ---
 
 ## 🔄 Tabla de equivalencias conceptuales
 
-| Concepto en docker-labs | 🐧 Equivalente en wsl-labs | Nota |
+| Concepto en docker-labs | 🐳 Equivalente en wsl-labs | Nota |
 | --- | --- | --- |
-| `docker compose up` | `sudo service <x> start` (vía `wsl.exe`) | El Control Center ejecuta el `startCommand` del catálogo |
-| **Contenedor** | **Demonio/proceso Linux en la distro** | nginx, apache, postgres corren nativos dentro de WSL2 |
-| **Imagen** | **Paquete apt** | `apt-get install nginx` en lugar de `pull` de una imagen |
-| `docker-compose.yml` | Entrada en `labs.config.json` | La fuente única de verdad del servicio |
-| **Servicio de compose** | **Lab de tipo `service`** | `id`, `port`, `startCommand`, `healthProtocol` |
-| **Puerto publicado** (`-p 8080:80`) | **Port forwarding automático de WSL2** | WSL2 reenvía el puerto de la distro a `localhost` de Windows |
-| **Red de compose** | **Red interna de la distro (`localhost`)** | Los servicios se comunican dentro de la misma distro |
-| **Volumen** | **Filesystem de la distro / `/mnt/c`** | Interop Windows ↔ WSL vía `/mnt/c/...` |
-| **Healthcheck de compose** | `healthProtocol: http\|tcp` | El Control Center hace el check (HTTP GET o TCP connect) |
-| `docker compose logs` | `logsCommand` (`tail` de logs en la distro) | `POST /api/wsl/logs { id }` |
-| `docker compose down` | `sudo service <x> stop` | `POST /api/wsl/stop { id }` |
-| **Docker daemon** | **WSL2 + `wsl.exe`** | El puente que ejecuta comandos dentro de Linux |
-| **Docker Desktop** | **WSL2 + Control Center** | La capa de control corre en Windows, el runtime en Linux |
-| `dashboard-control` (9090) | **Control Center** (`:9092`) | Mismo rol, distinto motor y puerto |
+| `docker build` | `wslc build` | Misma construcción por capas desde `Dockerfile` |
+| `docker run -d -p …` | `wslc run -d -p …` | Levanta un contenedor en segundo plano |
+| `docker rm -f` | `wslc stop` | Detiene y elimina el contenedor |
+| `docker compose up` | red `wslc` + varios `wslc run` conectados | Multi-contenedor sin `compose` |
+| `docker-compose.yml` | Entrada en `containers.config.json` | La fuente única de verdad del caso |
+| **Servicio de compose** | **Contenedor del caso** | `name`, `image`, `ports`, `env` |
+| **Imagen** | **Imagen** (`wslc build` o `wslc pull`) | Idéntico — OCI por capas |
+| **Red de compose** | **Red `wslc`** (`wslc network create`) | La app apunta al backend por nombre |
+| **Puerto publicado** (`-p 8080:80`) | **`-p host:container`** en `wslc run` | Mismo mapeo de puertos |
+| **Volumen** | **Volumen `wslc`** / filesystem | Modelo de contenedores estándar |
+| **Healthcheck de compose** | `healthProtocol: http` | El panel hace el check (HTTP GET) |
+| `docker compose logs` | `wslc logs` | `POST /api/wslc/logs { id }` |
+| `docker compose down` | `wslc stop` (por caso) | `POST /api/wslc/down { id }` |
+| **Docker daemon** | **Motor WSLC nativo** | `C:\Program Files\WSL\wslc.exe` |
+| **Docker Desktop** | **WSL 2.9+ + WSL Container Center** | El motor viene con WSL preview |
+| `dashboard-control` (9090) | **WSL Container Center** (`:9092`) | Mismo rol, motor WSLC |
 
 ---
 
@@ -46,44 +48,53 @@
 
 | Aspecto | `docker-labs` | `wsl-labs` |
 | --- | --- | --- |
-| Orquestación | `docker compose` | `wsl.exe -d <distro> -- bash -lc "<cmd>"` |
-| Runtime | Docker daemon | Servicios Linux nativos en WSL2 |
-| Empaquetado | Imágenes Docker | Paquetes `apt` |
-| Aislamiento | Namespaces/cgroups por contenedor | Una distro Linux completa (sin aislamiento por servicio) |
-| Puertos | `-p host:container` explícito | Forwarding automático de WSL2 a `localhost` |
-| Catálogo | `docker-compose.yml` por lab | `labs.config.json` central |
+| Motor | Docker Engine / Docker Desktop | **WSLC** nativo de WSL 2.9+ (preview) |
+| Comando build | `docker build` | `wslc build` |
+| Comando run | `docker run` | `wslc run` |
+| Multi-contenedor | `docker compose` | red `wslc` + varios `wslc run` |
+| Empaquetado | Imágenes OCI | Imágenes OCI (idéntico) |
+| Instalación | Docker Desktop aparte | Incluido en `wsl --update --pre-release` |
+| Catálogo | `docker-compose.yml` por lab | `containers.config.json` central |
 
 ---
 
-## 🎯 Traducción de puertos
+## 🎯 Traducción caso a caso (docker-labs → wsl-labs)
 
-| Servicio | docker-labs (típico) | wsl-labs |
-| --- | --- | --- |
-| 🌐 Servidor web | contenedor nginx `:8080` | `sudo service nginx start` → `:8080` |
-| 🐘 Apache + PHP | contenedor LAMP | `sudo service apache2 start` → `:8081` |
-| 🟢 API Node | contenedor node | `node server.js` en la distro → `:8082` |
-| 🐍 App Python | contenedor python | `python3 app.py` en la distro → `:8083` |
-| 🗄️ PostgreSQL | contenedor postgres `:5432` | `sudo service postgresql start` → `:5432` |
-| 🧭 Panel de control | `dashboard-control` `:9090` | Control Center `:9092` |
+Cada caso de `docker-labs` tiene su equivalente portado y verificado en `wsl-labs`:
+
+| Caso docker-labs | Caso wsl-labs | Imagen(es) | Puerto |
+| --- | --- | --- | :---: |
+| API Node | `01-node-api` | `node:20-alpine` (custom) | `8101` |
+| API Python | `03-python-api` | `python:3.12-alpine` (custom) | `8102` |
+| API Go | `10-go-api` | Go multi-stage (custom) | `8103` |
+| Web Nginx | `06-nginx-web` | `nginx:alpine` (custom) | `8104` |
+| Cache Redis | `04-redis-cache` | `redis:7-alpine` + app | `8105` |
+| API + PostgreSQL | `05-postgres-api` | `postgres:15` + app | `8106` |
+| LAMP | `02-php-lamp` | `mariadb:10.6` + PHP/Apache | `8107` |
+| RabbitMQ | `07-rabbitmq` | `rabbitmq:3-management` | `8109` |
+| Prometheus + Grafana | `08-prometheus-grafana` | `prom/prometheus` + `grafana/grafana` | `8110`/`8111` |
+| Multi-servicio (Mongo) | `09-multi-service` | `mongo:7` + backend | `8112` |
+| Elasticsearch | `11-elasticsearch` | `elasticsearch:8.11.0` | `8113` |
+| Jenkins | `12-jenkins` | `jenkins/jenkins:lts` | `8114` |
 
 ---
 
 ## ✅ Resultado esperado
 
-La experiencia final **no** es "Docker con otro nombre".
+La experiencia final **sí** es "contenedores reales", pero con el motor **nativo de
+WSL** en lugar de Docker:
 
-Es:
-
-- 🐧 **Servicios Linux reales** dentro de una distro WSL2 (no contenedores)
-- 🧭 **Control Center localhost** como panel de control (`:9092`)
+- 🐳 **Contenedores OCI reales** construidos y ejecutados con `wslc`
+- 🧩 **Multi-contenedor por red `wslc`** en lugar de `docker compose`
+- 🧭 **WSL Container Center** como panel de control (`:9092`)
 - 🚀 **Launcher Windows** como superficie desktop
-- 🌐 **Servicios publicados** en puertos fijos vía forwarding de WSL2
+- 🌐 **Puertos publicados** con `-p host:container`, igual que Docker
 
 > [!NOTE]
-> En `docker-labs` cada servicio vive en su **propio contenedor aislado**. En
-> `wsl-labs` todos los servicios conviven en la **misma distro Linux**: es más
-> cercano a administrar un servidor Linux real que a orquestar contenedores.
+> A diferencia de Docker, **no necesitas instalar Docker Desktop**: `wslc` viene
+> integrado en WSL 2.9+ (preview). El modelo de contenedores es el mismo; cambia el
+> binario y que el motor ya está en WSL.
 
 ---
 
-📖 Ver también: [README.md](../README.md) · [03-wsl-vs-docker-vs-vm.md](03-wsl-vs-docker-vs-vm.md) · [PLAN_PARIDAD.md](PLAN_PARIDAD.md)
+📖 Ver también: [README.md](../README.md) · [wslc-contenedores.md](wslc-contenedores.md) · [LABS_CATALOG.md](LABS_CATALOG.md)

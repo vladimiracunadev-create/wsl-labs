@@ -1,70 +1,72 @@
-# 🏗️ Arquitectura — WSL Labs
+# 🏗️ Arquitectura — WSL Container Center
 
-> **Versión**: 0.1.2
+> **Versión**: v1
 > **Estado**: 🟢 Activo
-> **Audiencia**: 👥 Técnico, DevOps, administradores de sistemas Linux
-> **Objetivo**: Visión técnica del workspace y de cómo Windows controla servicios que viven dentro de WSL2
+> **Audiencia**: 👥 Técnico, DevOps, administradores de sistemas
+> **Objetivo**: Visión técnica del workspace y de cómo Windows controla contenedores `wslc`
 
 ---
 
 ## 📌 Objetivo de arquitectura
 
-`wsl-labs` convierte WSL2 en una **plataforma operable**: no una terminal Linux
-suelta, sino un panel que arranca, detiene y vigila **servicios reales**
-(nginx, apache, node, flask, postgresql) accesibles desde el `localhost` de
-Windows. La arquitectura busca tres cosas:
+`wsl-labs` es un **panel para levantar y controlar contenedores** con `wslc`, el
+motor de contenedores nativo de WSL (WSL 2.9+, tipo Docker). Es el equivalente de
+[`docker-labs`](https://github.com/vladimiracunadev-create/docker-labs) pero usando
+`wslc` como motor. La arquitectura busca tres cosas:
 
-- 🎓 aprendizaje práctico de Linux sobre WSL
-- 🕹️ operación local con un clic, estilo Docker Desktop (sin contraseñas)
-- 🔗 una única fuente de verdad (`labs.config.json`) que alimenta panel y launcher
+- 🕹️ operación local con un clic: **📦 Construir → ▶ Levantar → 🌐 Abrir**
+- 🐳 contenedores reales (imágenes OCI, redes, multi-contenedor) accesibles desde `localhost`
+- 🔗 una única fuente de verdad (`containers/containers.config.json`) que alimenta panel y launcher
 
 ## 📊 Estado arquitectónico
 
 | Capa | Estado | Rol |
 | --- | --- | --- |
-| 🧭 Control Center (`dashboard-server`) | 🟢 Operativo | Puente Windows ↔ WSL2 y diagnóstico |
-| 🪟 Launcher Windows (Go) | 🟢 Operativo | Arranque del stack y apertura del navegador |
-| 🐧 Servicios en WSL2 (05–09, 11) | 🟢 Operativo | nginx, apache+php, node, flask, postgresql, mini-servidor |
-| 📚 Labs de aprendizaje (01–04, 10, 12) | 🟢 Operativo | Guías sin servicio persistente |
+| 🧭 Panel (`dashboard-server`) | 🟢 Operativo | Puente Windows → `wslc.exe` y diagnóstico |
+| 🪟 Launcher Windows (Go) | 🟢 Operativo | Arranque del panel y apertura del navegador |
+| 🐳 Motor `wslc` | 🟢 Operativo | Construye imágenes y ejecuta contenedores (con redes) |
+| 📇 Catálogo (`containers.config.json`) | 🟢 Operativo | 12 casos verificados portados de docker-labs |
 | 📦 Instalador (Inno Setup) | 🟢 Operativo | Distribución del launcher en Windows |
 
 ## 🧱 Capas del sistema
 
-La frontera clave es el límite **Windows ↔ WSL2**. Todo lo que el usuario ve
-(navegador, launcher, panel) corre en Windows; los servicios corren dentro de la
-distro Linux. El panel cruza esa frontera ejecutando
-`wsl.exe -d Ubuntu -u root -- bash -lc "<comando>"`.
+La frontera clave es el límite **Windows → motor de contenedores**. Todo lo que el
+usuario ve (navegador, launcher, panel) corre en Windows; los contenedores corren en el
+motor `wslc`. El panel cruza esa frontera **ejecutando `wslc.exe`** como proceso hijo.
 
 ```mermaid
 flowchart LR
     subgraph WIN["🪟 Windows 11"]
         B["Navegador"]
         L["Launcher .exe (Go)"]
-        D["🧭 Control Center<br/>Node.js :9092"]
+        D["🧭 Panel<br/>Node.js :9092"]
+        WSLC["wslc.exe<br/>C:\\Program Files\\WSL"]
     end
-    subgraph WSL["🐧 WSL2 · Ubuntu"]
-        N["nginx :8080"]
-        A["apache+php :8081"]
-        NO["node systemd :8082"]
-        P["flask systemd :8083"]
-        PG["postgresql :5432"]
-        M["mini-servidor :8090"]
+    subgraph ENGINE["🐳 Motor de contenedores wslc"]
+        subgraph NET["red wslc-pg-net"]
+            APP["05 pg-app :8106"]
+            PG["postgres"]
+        end
+        N["06 nginx :8104"]
+        J["12 jenkins :8114"]
     end
     L --> D
     B --> D
-    D -->|"wsl.exe -u root -- bash -lc"| WSL
-    D -.->|"health TCP/HTTP<br/>IPv4 + IPv6"| WSL
-    D -.->|"wsl -- sleep infinity (keepalive)"| WSL
+    D -->|spawn| WSLC
+    WSLC --> ENGINE
+    APP <--> PG
+    D -.->|"health HTTP<br/>IPv4 + IPv6"| ENGINE
 ```
 
 > [!NOTE]
-> No hay red de contenedores ni orquestador: los servicios escuchan directamente
-> en la distro y WSL2 reexpone esos puertos en el `localhost` de Windows. El
-> health-check y el acceso del usuario viajan por ese `localhost`.
+> Los casos **multi-contenedor** levantan sus contenedores sobre una **red wslc**
+> dedicada, de forma que se resuelven entre sí por nombre (p. ej. `PG_HOST=wslc-postgres`).
+> WSLC reexpone los puertos publicados en el `localhost` de Windows; el health-check y
+> el acceso del usuario viajan por ese `localhost`.
 
 ## 🧠 Componentes principales
 
-### 1. 🧭 Control Center
+### 1. 🧭 Panel
 
 | Atributo | Detalle |
 | --- | --- |
@@ -75,11 +77,11 @@ flowchart LR
 **Responsabilidades:**
 
 - Servir la UI estática (`index.html`, `dashboard.css`, `dashboard.js`)
-- Exponer `GET /api/overview` y `GET /api/health/:id`
-- Ejecutar acciones sobre WSL vía `POST /api/wsl/{start,stop,logs,install}`
-- Traducir cada acción a `wsl.exe -d <distro> -u root -- bash -lc "<comando>"`
-- Sondear salud (TCP/HTTP, IPv4 + IPv6) y detectar binarios instalados
-- Mantener viva la distro mientras corre (keepalive con `sleep infinity`)
+- Exponer `GET /api/wslc/overview`
+- Ejecutar acciones vía `POST /api/wslc/{build,up,down,logs}`
+- Traducir cada acción a comandos `wslc` (`build`, `run`, `stop`, `rm`, `logs`, `network`)
+- Localizar `wslc.exe` (env `WSL_LABS_WSLC` → `C:\Program Files\WSL\wslc.exe` → PATH)
+- Sondear salud (HTTP, IPv4 + IPv6) y detectar imágenes construidas
 
 ---
 
@@ -93,111 +95,99 @@ flowchart LR
 
 **Responsabilidades:**
 
-- Verificar que WSL2 esté disponible y detectar la distro
-- Arrancar el Control Center en segundo plano
-- Hacer polling a `/api/overview` hasta que responda
+- Verificar que WSL 2 esté disponible
+- Arrancar el panel en segundo plano
+- Hacer polling a `/api/wslc/overview` hasta que responda
 - Abrir el navegador en `http://localhost:9092`
 
 ---
 
-### 3. 🐧 Servicios WSL2
+### 3. 🐳 Motor de contenedores `wslc`
 
 | Atributo | Detalle |
 | --- | --- |
-| Ubicación | Dentro de la distro Ubuntu |
-| Instalación | Scripts idempotentes `scripts/install-*.sh` |
-| Modelo | Servicios del sistema (nginx/apache/postgresql) + unidades systemd propias (node/flask) |
+| Motor | `wslc` — motor de contenedores nativo de WSL (WSL 2.9+, preview) |
+| Ejecutable | `C:\Program Files\WSL\wslc.exe` |
+| Obtención | `wsl --update --pre-release` |
 
 **Responsabilidades:**
 
-- Publicar servicios reales en `localhost` (8080, 8081, 8082, 8083, 5432, 8090)
-- Persistir tras reinicios de la instancia (systemd `enabled`)
-- Escribir logs consultables desde el panel (`journalctl` / `/var/log/...`)
+- Construir imágenes custom desde `Dockerfile` (`wslc build`, contexto `containers/NN-*/`)
+- Ejecutar contenedores publicando puertos en `localhost` (`wslc run -d -p …`)
+- Crear redes para los casos multi-contenedor (`wslc network create`)
+- Exponer logs consultables desde el panel (`wslc logs`)
 
 ---
 
-### 4. 📇 Catálogo `labs.config.json`
+### 4. 📇 Catálogo `containers/containers.config.json`
 
 | Atributo | Detalle |
 | --- | --- |
-| Componente | [`labs.config.json`](../labs.config.json) |
+| Componente | [`containers/containers.config.json`](../containers/containers.config.json) |
 | Rol | Fuente única de verdad del proyecto |
 
 **Responsabilidades:**
 
-- Definir puertos, URLs, `requires`, y comandos `install/start/stop/logs`
-- Declarar `healthProtocol` (`http` / `tcp` / `null`) por lab
-- Alimentar tanto al Control Center como al launcher
+- Definir cada caso: `id`, `name`, `title`, `category`, `port`, `url`, `healthProtocol`
+- Declarar las imágenes a construir (`build[]`) con su `context`
+- Declarar los contenedores (`containers[]`: `name`, `image`, `ports`, `env`) y la `network`
+- Alimentar tanto al panel como al launcher
 
-## 🗂️ Taxonomía del repositorio
+## 🗂️ Categorías del catálogo
 
-| Tipo | Labs | Intención |
+| Categoría | Casos | Intención |
 | --- | --- | --- |
-| ⚙️ `service` | `05`, `06`, `07`, `08`, `09`, `11` | Servicios reales operables desde el panel |
-| 📚 `learning` | `01`, `02`, `03`, `04`, `10`, `12` | Guías de aprendizaje sin servicio persistente |
+| 🌱 `starter` | `01` node · `03` python · `06` nginx · `10` go | Un contenedor, imagen custom, arranque simple |
+| 🧩 `platform` | `02` LAMP · `04` redis · `05` postgres · `09` mongo | App custom + dependencia sobre una red wslc |
+| 🏗️ `infra` | `07` rabbitmq · `08` prometheus+grafana · `11` elasticsearch · `12` jenkins | Imágenes públicas de infraestructura |
 
-## 🔄 Flujo de una acción (Instalar / Levantar)
+## 🔄 Flujo de una acción (Construir / Levantar)
 
-El corazón del sistema es cómo una pulsación en el navegador termina cambiando
-el estado de un servicio Linux. Ejemplo: **📦 Instalar → ▶ Levantar** nginx.
+El corazón del sistema es cómo una pulsación en el navegador termina cambiando el
+estado de un contenedor. Ejemplo: **📦 Construir → ▶ Levantar** el caso `05 API + PostgreSQL`.
 
 ```mermaid
 flowchart TD
-    A["Usuario pulsa 'Instalar' en el panel"] --> B["dashboard.js → POST /api/wsl/install { id: 05 }"]
+    A["Usuario pulsa 'Construir' en el panel"] --> B["dashboard.js → POST /api/wslc/build { id: 05 }"]
     B --> C["server.js valida id contra el catálogo"]
-    C --> D["Resuelve installCommand y sustituye<br/>$WSL_LABS_ROOT por la ruta literal /mnt/c/..."]
-    D --> E["wsl.exe -d Ubuntu -u root -- bash -lc<br/>'bash /mnt/c/.../install-nginx.sh'"]
-    E --> F["El script instala nginx (apt, idempotente)"]
-    F --> G["Usuario pulsa 'Levantar' → POST /api/wsl/start"]
-    G --> H["wsl.exe ... 'sudo service nginx start'"]
-    H --> I["Health-check TCP+HTTP (IPv4 e IPv6) a localhost:8080"]
-    I --> J["Panel muestra 🟢 healthy"]
+    C --> D["wslc build -t wsl-labs/pg-app:latest containers/05-postgres-api"]
+    D --> E["Usuario pulsa 'Levantar' → POST /api/wslc/up"]
+    E --> F["wslc network create wslc-pg-net"]
+    F --> G["wslc run -d --name wslc-postgres --network wslc-pg-net postgres:15"]
+    G --> H["wslc run -d --name wslc-pg-app --network wslc-pg-net -p 8106:8000<br/>-e PG_HOST=wslc-postgres wsl-labs/pg-app:latest"]
+    H --> I["Health-check HTTP (IPv4 e IPv6) a localhost:8106"]
+    I --> J["Panel muestra 🟢 running"]
 ```
 
 > [!IMPORTANT]
-> Las variables de shell asignadas dentro de `wsl.exe -- bash -lc` **no se
-> expanden de forma fiable**. Por eso el servidor **sustituye `$WSL_LABS_ROOT`
-> por la ruta literal** (`/mnt/c/...`) antes de enviar el comando, en vez de
-> confiar en la expansión del shell.
-
-## 🔐 Modelo de ejecución privilegiada
-
-| Aspecto | Implementación |
-| --- | --- |
-| Usuario | Los comandos corren como `root` (`wsl.exe -u root`), estilo Docker privilegiado |
-| Sin contraseña | Windows ya autenticó al usuario → no hay `sudo` interactivo que cuelgue el panel |
-| Passwordless sudo | Opcional, solo para uso por terminal; no lo necesita el panel |
-
-## 💓 Keepalive de la instancia
-
-WSL2 apaga la distro tras unos segundos de inactividad, lo que tumbaría los
-servicios. Mientras el Control Center corre, mantiene una sesión abierta
-(`wsl -- sleep infinity`) para que la instancia siga viva y los puertos sigan
-accesibles desde `localhost` — igual que Docker Desktop mantiene su VM.
+> **Levantar es idempotente**: por cada contenedor, el panel hace `wslc stop` +
+> `wslc rm` de un contenedor previo con el mismo nombre antes de recrearlo. Así no se
+> duplican contenedores al pulsar **▶ Levantar** varias veces.
 
 ## 🩺 Modelo de health-check
 
-Los servicios en WSL pueden bindear IPv4 (`0.0.0.0`) o IPv6 (`::`). Un check que
-solo pruebe IPv4 marcaría "detenido" un servicio que solo escucha por `::1`. Por
-eso los checks prueban **ambas familias** (`127.0.0.1` y `::1`), igual que
-`curl localhost`.
+Un contenedor puede publicar el puerto por IPv4 (`0.0.0.0`) o por IPv6 (`::`). Un check
+que solo probara IPv4 marcaría "abajo" un caso que solo escucha por `::1`. Por eso los
+checks prueban **ambas familias** (`127.0.0.1` y `::1`), igual que `curl localhost`.
+Todos los casos usan `healthProtocol: http`.
 
 | Estado | Significado |
 | --- | --- |
-| 🟢 `healthy` | Puerto abierto (y HTTP < 500 si `healthProtocol: http`) |
-| 🔴 `stopped` | Puerto cerrado / sin respuesta |
-| 🟡 `degraded` | Puerto abierto pero HTTP responde error |
-| ⚪ `missing` | Servicio no instalado y parado |
+| 🟢 `running` | Contenedor principal en `wslc list` y HTTP responde (`< 500`) |
+| 🟡 `degraded` | Contenedor presente pero aún no responde (arrancando) |
+| 🔴 `stopped` | Imagen lista, contenedor abajo |
+| 📦 `missing` | Imagen custom sin construir |
+| 🚫 `unavailable` | `wslc` no disponible |
 
 ## 🧩 Principios de diseño
 
 | Principio | Descripción |
 | --- | --- |
-| Fuente única de verdad | Puertos y comandos viven solo en `labs.config.json` |
+| Fuente única de verdad | Casos, imágenes, puertos y redes viven solo en `containers.config.json` |
 | Cero dependencias | Panel en `http` nativo, launcher en stdlib de Go |
-| Honestidad de estado | El panel distingue `missing` de `stopped` — no miente sobre lo instalado |
-| Operación estilo Docker | Root privilegiado + keepalive → un clic, sin contraseñas ni terminal |
-| Local only | Sin Kubernetes ni cloud: todo vive en la máquina del usuario |
+| Honestidad de estado | El panel distingue `missing` de `stopped` — no miente sobre lo construido |
+| Idempotencia | Levantar recrea limpio; bajar conserva la imagen para relanzar rápido |
+| Local only | Sin Kubernetes ni cloud: contenedores `wslc` en la máquina del usuario |
 
 ## 📚 Documentos relacionados
 
@@ -205,4 +195,5 @@ eso los checks prueban **ambas familias** (`127.0.0.1` y `::1`), igual que
 - [FILE_ARCHITECTURE.md](../FILE_ARCHITECTURE.md)
 - [SYSTEM_SPECS.md](../SYSTEM_SPECS.md)
 - [TECHNICAL_SPECS.md](TECHNICAL_SPECS.md)
-- [LABS_CATALOG.md](LABS_CATALOG.md)
+- [Track de contenedores WSLC](wslc-contenedores.md)
+- [Setup del panel](DASHBOARD_SETUP.md)

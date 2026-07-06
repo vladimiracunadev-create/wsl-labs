@@ -1,7 +1,7 @@
-# 🔧 ENVIRONMENT_SETUP — WSL Control Center v1
+# 🔧 ENVIRONMENT_SETUP — WSL Container Center
 
-> Guía completa para preparar un host **Windows 11 + WSL2 + Ubuntu + Node.js**
-> hasta abrir el Control Center en `localhost:9092`.
+> Guía completa para preparar un host **Windows 11 + WSL2 + `wslc` + Node.js**
+> hasta abrir el panel en `localhost:9092` y levantar tu primer contenedor.
 > Para la operación del día a día, consulta [RUNBOOK.md](RUNBOOK.md).
 
 ---
@@ -10,104 +10,83 @@
 
 Dejar el host listo para el flujo real del producto:
 
-- 🪟 **Control Center** (Node.js) corriendo en Windows en `:9092`
-- 🐧 **Backend WSL2** con una distro Ubuntu/Debian y servicios Linux nativos
-- 🌐 **Servicios publicados en `localhost`** (nginx, apache, node, flask, postgres…)
+- 🪟 **Panel** (Node.js) corriendo en Windows en `:9092`
+- 🐳 **Motor `wslc`** disponible (WSL 2.9+, `C:\Program Files\WSL\wslc.exe`)
+- 🌐 **Contenedores publicados en `localhost`** (los 12 casos del catálogo)
 - 🚀 Opción de usar también el **launcher Go** (`.exe`) para arrancar todo de un clic
 
 ```mermaid
 flowchart LR
     subgraph WIN["🪟 Windows 11"]
         B["🌐 Navegador"]
-        D["🧭 Control Center<br/>Node.js :9092"]
+        D["🧭 Panel<br/>Node.js :9092"]
+        W["🐳 wslc.exe"]
     end
-    subgraph WSL["🐧 WSL2 · Ubuntu"]
-        N["nginx :8080"]
-        NO["node :8082"]
-        PG["postgresql :5432"]
+    subgraph WSL["🐧 WSL 2.9+"]
+        C1["contenedor<br/>node-api :8101"]
+        C2["contenedor<br/>postgres :8106"]
     end
     B --> D
-    D -->|wsl.exe -d Ubuntu| WSL
+    D -->|wslc build/run| W
+    W --> WSL
 ```
 
 ---
 
-## 🪟 Paso 1 · Instalar WSL2 + Ubuntu
+## 🪟 Paso 1 · Instalar WSL2
 
 Desde una terminal de **PowerShell como administrador**:
 
 ```powershell
-wsl --install -d Ubuntu
+wsl --install
 ```
 
-Esto habilita las características de virtualización, instala WSL2 y descarga
-Ubuntu. **Reinicia Windows** si el instalador lo solicita.
+Esto habilita la virtualización e instala WSL2. **Reinicia Windows** si el
+instalador lo solicita.
 
 > [!NOTE]
-> El primer arranque de Ubuntu pedirá crear un **usuario y contraseña** de Linux.
-> Guárdalos: los usarás para los servicios que requieren `sudo`.
-
-Verifica que la distro quedó en **WSL 2**:
-
-```powershell
-wsl -l -v
-```
-
-Debes ver `Ubuntu` con `VERSION 2`. Si aparece `1`, conviértela:
-
-```powershell
-wsl --set-version Ubuntu 2
-```
+> El motor de contenedores `wslc` **no** vive dentro de una distro: es parte del
+> propio WSL. Aun así, WSL debe estar instalado y en versión 2.9+.
 
 ---
 
-## 📁 Paso 2 · Elegir la ubicación del repo
+## 🐳 Paso 2 · Activar el motor de contenedores `wslc`
 
-Hay dos layouts válidos:
+`wslc` llega con la rama **preview** de WSL. Actualiza y verifica:
 
-### 🅐 Repo en Windows _(recomendado)_
-
-Es el layout validado para el flujo de `localhost`, porque el Control Center
-corre en Windows:
-
-```text
-C:\dev\wsl-labs
+```powershell
+wsl --update --pre-release
+wsl --version
+& "C:\Program Files\WSL\wslc.exe" version
 ```
 
-Visto desde WSL:
+Debes ver WSL en **2.9+** y `wslc version` respondiendo.
 
-```text
-/mnt/c/dev/wsl-labs
-```
+> [!WARNING]
+> Si `wslc` no aparece tras actualizar, reinicia WSL con `wsl --shutdown` y
+> vuelve a comprobarlo. El panel localiza el binario en
+> `C:\Program Files\WSL\wslc.exe` (o en `WSL_LABS_WSLC` si lo defines).
 
-Clona el repo desde PowerShell:
+---
+
+## 📁 Paso 3 · Clonar el repo
+
+Clona en Windows (el panel y `wslc.exe` corren en Windows):
 
 ```powershell
 git clone https://github.com/vladimiracunadev-create/wsl-labs.git C:\dev\wsl-labs
 cd C:\dev\wsl-labs
 ```
 
-> [!TIP]
-> El Control Center convierte automáticamente `C:\dev\wsl-labs` a
-> `/mnt/c/dev/wsl-labs` y exporta esa ruta como `WSL_LABS_ROOT` para que los
-> servicios de ejemplo (node, flask) la resuelvan dentro de la distro.
-
-### 🅑 Repo en filesystem Linux
-
-Recomendado si vas a trabajar sobre todo desde consola Linux (I/O más rápida):
-
-```bash
-mkdir -p ~/dev && cd ~/dev
-git clone https://github.com/vladimiracunadev-create/wsl-labs.git
-cd wsl-labs
-```
+El catálogo de casos vive en `containers/containers.config.json` y cada caso en
+`containers/NN-nombre/`.
 
 ---
 
-## 📦 Paso 3 · Instalar Node.js en Windows
+## 📦 Paso 4 · Instalar Node.js en Windows
 
-El Control Center corre en **Windows** con Node.js (no usa dependencias npm;
-solo el módulo `http` nativo).
+El panel corre en **Windows** con Node.js (sin dependencias npm; solo el módulo
+`http` nativo).
 
 1. Descarga **Node.js 18 LTS o superior** desde <https://nodejs.org/>
 2. Verifica en PowerShell:
@@ -117,35 +96,12 @@ node --version
 ```
 
 > [!IMPORTANT]
-> Node.js debe estar en el **PATH de Windows**, no dentro de WSL. Es Windows
-> quien ejecuta `node dashboard-server/server.js` y hace de puente hacia WSL2
-> con `wsl.exe`.
+> Node.js debe estar en el **PATH de Windows**, no dentro de WSL. Es Windows quien
+> ejecuta `node dashboard-server/server.js` e invoca `wslc.exe`.
 
 ---
 
-## 🐧 Paso 4 · Preparar la distro (dentro de WSL)
-
-Instala los paquetes base de los servicios (nginx, apache+php, postgresql,
-python) con el script de instalación:
-
-```powershell
-wsl bash /mnt/c/dev/wsl-labs/scripts/install-base.sh
-```
-
-O, si el repo está en filesystem Linux:
-
-```bash
-bash scripts/install-base.sh
-```
-
-> [!TIP]
-> Los servicios `05`–`09` usan `sudo service <nombre> start`. Para que el
-> Control Center pueda arrancarlos sin pedir contraseña, considera un `sudoers`
-> sin password para esos servicios (ver [COMPATIBILITY.md](COMPATIBILITY.md)).
-
----
-
-## 🖥️ Paso 5 · Levantar el Control Center
+## 🖥️ Paso 5 · Levantar el panel
 
 Desde la raíz del repo, en PowerShell:
 
@@ -156,50 +112,41 @@ node dashboard-server/server.js
 make serve
 ```
 
-La consola debe mostrar algo como:
-
-```text
-  WSL Control Center
-  http://localhost:9092
-  Repo (Windows): C:\dev\wsl-labs
-  Repo (WSL):     /mnt/c/dev/wsl-labs
-  Distro:         Ubuntu
-  Auth token:     desactivado (modo dev)
-```
-
 Abre → **<http://localhost:9092>**
 
-El panel debe mostrar la distro detectada, los 12 labs del catálogo y el estado
-de cada servicio.
+El panel debe mostrar los 12 casos del catálogo, agrupados por categoría
+(`starter`, `platform`, `infra`), con botones **Construir / Levantar / Bajar /
+Logs**.
 
 ---
 
-## 🧪 Paso 6 · Validar un servicio real
+## 🧪 Paso 6 · Levantar tu primer contenedor
 
-Arranca **nginx (lab 05)** desde la UI o por API (el token está desactivado en
-modo dev):
+Desde la tarjeta **01 · API Node.js**:
 
-```powershell
-$headers = @{ 'Content-Type' = 'application/json' }
-Invoke-RestMethod -Method Post -Headers $headers `
-  -Body '{ "id": "05" }' http://localhost:9092/api/wsl/start
-```
-
-Valida la salud del servicio:
+1. Pulsa **🔨 Construir** (construye `wsl-labs/node-api:latest`).
+2. Pulsa **▶ Levantar** (arranca `wslc-node-api` en `:8101`).
+3. Verifica:
 
 ```powershell
-Invoke-RestMethod http://localhost:9092/api/health/05
-Invoke-WebRequest http://localhost:8080 -UseBasicParsing
+Invoke-WebRequest http://localhost:8101 -UseBasicParsing
 ```
 
-Debe responder `status: healthy` y NGINX debe contestar en `:8080`.
+Debe responder HTTP 200 con JSON del contenedor.
+
+O por API (token desactivado en modo dev):
+
+```powershell
+$h = @{ 'Content-Type' = 'application/json' }
+Invoke-RestMethod -Method Post -Headers $h -Body '{ "id": "01" }' http://localhost:9092/api/wslc/build
+Invoke-RestMethod -Method Post -Headers $h -Body '{ "id": "01" }' http://localhost:9092/api/wslc/up
+```
 
 ---
 
 ## 🚀 Paso 7 · Launcher Windows _(opcional)_
 
-Si prefieres un `.exe` que verifique WSL2, arranque el Control Center y abra el
-navegador por ti:
+Si prefieres un `.exe` que verifique WSL, arranque el panel y abra el navegador:
 
 ```powershell
 # Compilar el launcher (requiere Go 1.21+)
@@ -208,30 +155,34 @@ go build -ldflags "-X main.launcherVersion=0.1.0" -o wsl-labs-launcher.exe .
 .\wsl-labs-launcher.exe
 ```
 
-También puedes descargar el `.exe` ya compilado desde
-[GitHub Releases](https://github.com/vladimiracunadev-create/wsl-labs/releases).
-
-> [!NOTE]
-> El launcher usa el mismo modelo de `localhost` que el Control Center: detecta
-> la distro con `wsl.exe -l -q`, arranca `node dashboard-server/server.js` en
-> segundo plano y hace polling a `/api/overview` hasta 90 s antes de abrir el
-> navegador.
+También puedes descargar el `.exe` ya compilado (empaquetado con **Inno Setup**)
+desde [GitHub Releases](https://github.com/vladimiracunadev-create/wsl-labs/releases).
 
 ---
 
 ## 🔥 Paso 8 · Troubleshooting rápido
 
 > [!WARNING]
-> Si `localhost:9092` no responde, sigue este checklist en orden:
+> Si `localhost:9092` no responde o un caso no levanta, sigue este checklist:
 
-1. Confirma que Node.js está en el PATH de Windows → `node --version`
-2. Confirma que `wsl.exe --status` responde
-3. Confirma la distro con `wsl -l -v` (debe ser VERSION 2)
-4. Revisa que no haya otro proceso ocupando `:9092` → `netstat -ano | findstr 9092`
-5. Dentro de WSL, verifica el servicio → `sudo service nginx status`
-6. Revisa que no haya colisión de puertos en `8080`, `8081`, `8082`, `8083`, `5432`, `8090`
-7. Consulta el lab [12-troubleshooting](labs/12-troubleshooting/) para casos comunes
+1. `wsl --version` → debe ser **2.9+** (si no, `wsl --update --pre-release`)
+2. `& "C:\Program Files\WSL\wslc.exe" version` → el motor debe responder
+3. `node --version` → Node ≥ 18 en el PATH de Windows
+4. `netstat -ano | findstr 9092` → que nada más ocupe el puerto del panel
+5. Colisión de puertos de casos → parten de `8100` (`8101`, `8102`…)
+6. Casos pesados (Elasticsearch/Jenkins): levántalos de uno en uno; ajusta RAM en
+   `%UserProfile%\.wslconfig`
+7. Consulta [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md)
 
 ---
 
-📖 Ver también: [RUNBOOK.md](RUNBOOK.md) · [COMPATIBILITY.md](COMPATIBILITY.md) · [docs/00-que-es-wsl.md](docs/00-que-es-wsl.md)
+## 📚 Contexto: fundamentos de WSL
+
+Si quieres entender **qué es WSL** (la base del motor `wslc`), las guías
+`docs/00-05` y la [historia y referencia](docs/wsl-historia-y-referencia.md)
+están como **documentación de contexto**. No son necesarias para operar
+contenedores.
+
+---
+
+📖 Ver también: [RUNBOOK.md](RUNBOOK.md) · [COMPATIBILITY.md](COMPATIBILITY.md) · [docs/wslc-contenedores.md](docs/wslc-contenedores.md)

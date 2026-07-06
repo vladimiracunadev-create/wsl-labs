@@ -9,14 +9,16 @@ Guía breve para pedir ayuda con `wsl-labs`.
 Revisa primero, en este orden:
 
 - [README.md](README.md) — visión general y quickstart
-- [ENVIRONMENT_SETUP.md](ENVIRONMENT_SETUP.md) — preparar Windows + WSL2
-- [RUNBOOK.md](RUNBOOK.md) — operación diaria del Control Center
-- [FAQ.md](FAQ.md) — preguntas frecuentes (¿pide contraseña?, ¿necesito Docker?…)
-- [labs/12-troubleshooting/](labs/12-troubleshooting/) — diagnóstico de WSL
+- [ENVIRONMENT_SETUP.md](ENVIRONMENT_SETUP.md) — preparar Windows + WSL + `wslc`
+- [RUNBOOK.md](RUNBOOK.md) — operación diaria del panel y los contenedores
+- [FAQ.md](FAQ.md) — preguntas frecuentes (¿necesito Docker?, ¿qué es `wslc`?…)
+- [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) — diagnóstico
 
 > [!TIP]
-> Muchos problemas se resuelven con `wsl --status` y `wsl -l -v`. Si el panel no
-> abre, confirma que Node.js responde en Windows (`node --version`, ≥ 18).
+> Muchos problemas se resuelven confirmando el motor:
+> `wsl --version` (WSL 2.9+) y `& "C:\Program Files\WSL\wslc.exe" version`.
+> Si el panel no abre, confirma que Node.js responde en Windows (`node --version`,
+> ≥ 18).
 
 ---
 
@@ -33,15 +35,15 @@ Repositorio: <https://github.com/vladimiracunadev-create/wsl-labs>
 
 | Dato | Ejemplo |
 | --- | --- |
-| Lab o componente | `05-servidor-web-nginx` / Control Center / launcher `.exe` |
+| Caso o componente | `04-redis-cache` / panel / launcher `.exe` |
 | Versión de `wsl-labs` | contenido de `version.txt` (p. ej. `0.1.2`) |
 | Windows | Windows 11 23H2 |
-| WSL | salida de `wsl --status` y `wsl -l -v` |
-| Distro | Ubuntu (versión) |
+| WSL | salida de `wsl --version` (debe ser 2.9+) |
+| Motor `wslc` | salida de `& "C:\Program Files\WSL\wslc.exe" version` |
 | Node.js | `node --version` en Windows |
-| Comando ejecutado | endpoint `/api/wsl/start` o el `make`/`wsl bash …` usado |
-| Resultado esperado vs real | "esperaba HTTP 200 en `:8080`, obtuve `stopped`" |
-| Logs | salida de `/api/wsl/logs` o `wsl -d Ubuntu -- bash -lc "journalctl -u wsl-labs-node -n 50"` |
+| Comando ejecutado | endpoint `/api/wslc/up` o el `wslc build/run …` usado |
+| Resultado esperado vs real | "esperaba HTTP 200 en `:8101`, el contenedor no arranca" |
+| Logs | salida de `/api/wslc/logs` o `& "C:\Program Files\WSL\wslc.exe" logs <contenedor>` |
 
 ---
 
@@ -49,14 +51,15 @@ Repositorio: <https://github.com/vladimiracunadev-create/wsl-labs>
 
 Este repositorio está orientado a:
 
-- 🐧 aprendizaje práctico de **WSL2** y servicios Linux en `localhost`
-- 🧪 prototipado local sobre Windows
-- 🧱 construcción progresiva de una plataforma modular (Control Center + labs)
+- 🐳 aprendizaje práctico de **contenedores con `wslc`** en `localhost`
+- 🧪 prototipado local sobre Windows sin Docker Desktop
+- 🧱 construcción progresiva de un catálogo de casos portados de `docker-labs`
 
 > [!NOTE]
-> `wsl-labs` es **local only**: no cubre despliegues en cloud ni Kubernetes, y
-> no promete soporte de producción ni SLA. El Control Center corre solo en
-> `localhost` por diseño (ver [SECURITY.md](SECURITY.md)).
+> `wsl-labs` es **local only**: no cubre despliegues en cloud ni Kubernetes, y no
+> promete soporte de producción ni SLA. El panel corre solo en `localhost` por
+> diseño (ver [SECURITY.md](SECURITY.md)). Las guías de fundamentos de WSL
+> (`docs/00-05`) quedan como documentación de contexto.
 
 ---
 
