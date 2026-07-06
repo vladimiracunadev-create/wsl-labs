@@ -13,6 +13,18 @@
 
 ---
 
+### 🗺️ Esquema
+
+```mermaid
+graph TD
+    W["wsl.exe"] --> I["Instalar (--install / --update)"]
+    W --> L["Listar (--list / --status)"]
+    W --> C["Ciclo de vida (-d / --shutdown)"]
+    W --> E["Ejecutar (-- comando)"]
+```
+
+---
+
 ## 🎯 Objetivo
 
 Practicar los comandos de administración básica de WSL desde PowerShell y aprender a saltar entre Windows y el shell Linux.

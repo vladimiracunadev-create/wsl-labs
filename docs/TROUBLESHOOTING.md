@@ -6,6 +6,21 @@
 > [`12-troubleshooting`](../labs/12-troubleshooting/) y los
 > [cheatsheets](../cheatsheets/troubleshooting.md).
 
+## 🗺️ Esquema
+
+```mermaid
+flowchart TD
+    Q1{"¿WSL arranca?<br/>wsl -l -v"}
+    Q1 -->|No| S1["wsl --install · set-version 2<br/>activar virtualización BIOS"]
+    Q1 -->|Sí| Q2{"¿Servicio instalado?"}
+    Q2 -->|No| S2["📦 Instalar en el panel"]
+    Q2 -->|Sí| Q3{"¿Puerto escucha?<br/>ss -tlnp"}
+    Q3 -->|No| S3["▶ Levantar · revisar systemd y logs"]
+    Q3 -->|Sí| Q4{"¿localhost responde?"}
+    Q4 -->|No| S4["Puerto ocupado en Windows<br/>netstat -ano findstr"]
+    Q4 -->|Sí| OK["✅ healthy"]
+```
+
 ---
 
 ## 🐧 WSL no arranca

@@ -6,6 +6,35 @@
 
 ---
 
+## 🗺️ Esquema
+
+```mermaid
+graph LR
+    subgraph Runtime["🐧 Runtime"]
+        WSL["WSL 2"]
+        Systemd["systemd"]
+        Apt["apt"]
+        Node["Node.js 18+"]
+    end
+    subgraph Build["🛠️ Build"]
+        Go["Go 1.21"]
+        Inno["Inno Setup"]
+    end
+    subgraph CI["🤖 GitHub Actions"]
+        Docs["docs"]
+        Scripts["scripts"]
+        Dashboard["dashboard"]
+        BuildWin["build-windows"]
+    end
+    Go --> BuildWin
+    Inno --> BuildWin
+    Node --> Dashboard
+    WSL --> Systemd
+    WSL --> Apt
+```
+
+---
+
 ## 🐧 Herramientas de runtime
 
 Lo mínimo para **ejecutar** el sistema y sus servicios.

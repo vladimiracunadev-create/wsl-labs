@@ -13,6 +13,19 @@
 
 ---
 
+### 🗺️ Esquema
+
+```mermaid
+graph TD
+    S["systemd (PID 1)"] --> E["systemctl enable"]
+    S --> T["systemctl start"]
+    S --> U["systemctl status"]
+    E --> V["servicio activo al inicio"]
+    T --> V
+```
+
+---
+
 ## 🎯 Objetivo
 
 Usar `systemctl` para administrar servicios Linux reales dentro de WSL, con systemd como PID 1.

@@ -16,6 +16,19 @@
 
 ---
 
+### 🗺️ Esquema
+
+```mermaid
+flowchart LR
+    W["Windows"] --> P["Panel :9092"]
+    P --> X["wsl.exe -u root"]
+    X --> S["servicio apache2 + php"]
+    S --> N["puerto :8081"]
+    N --> B["navegador"]
+```
+
+---
+
 ## 📦 Instalación y configuración (una vez)
 
 ```bash

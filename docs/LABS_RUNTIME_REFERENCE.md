@@ -6,6 +6,28 @@
 
 ---
 
+## 🗺️ Esquema
+
+```mermaid
+flowchart TD
+    Start["startCommand (panel)"]
+    Start --> Sys["service del sistema"]
+    Start --> Unit["unidad systemd propia"]
+    Sys --> NGINX["nginx"]
+    Sys --> APACHE["apache2"]
+    Sys --> PG["postgresql"]
+    Unit --> NODE["wsl-labs-node"]
+    Unit --> FLASK["wsl-labs-flask"]
+    NGINX --> Port["puerto en localhost"]
+    APACHE --> Port
+    PG --> Port
+    NODE --> Port
+    FLASK --> Port
+    Port --> Health["health-check: http / tcp"]
+```
+
+---
+
 ## 📖 Cómo leer esta tabla
 
 - **Paquete / servicio**: qué se instala y cómo lo gestiona la distro.

@@ -16,6 +16,19 @@
 
 ---
 
+### 🗺️ Esquema
+
+```mermaid
+flowchart LR
+    W["Windows"] --> P["Panel :9092"]
+    P --> X["wsl.exe -u root"]
+    X --> S["servicio nginx"]
+    S --> N["puerto :8080"]
+    N --> B["navegador"]
+```
+
+---
+
 ## 📦 Instalación y configuración (una vez)
 
 ```bash

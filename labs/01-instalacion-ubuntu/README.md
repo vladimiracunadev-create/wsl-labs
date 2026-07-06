@@ -13,6 +13,18 @@
 
 ---
 
+### 🗺️ Esquema
+
+```mermaid
+flowchart TD
+    A["wsl --install -d Ubuntu"] --> B["Reiniciar Windows"]
+    B --> C["Crear usuario y contraseña"]
+    C --> D["apt update / upgrade"]
+    D --> E["Distro Ubuntu lista"]
+```
+
+---
+
 ## 🎯 Objetivo
 
 Instalar Ubuntu sobre WSL 2 y dejarlo listo para el resto de laboratorios de la suite.

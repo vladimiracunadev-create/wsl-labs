@@ -15,6 +15,17 @@ fuente y scripts de build**: no se versiona ningún binario en el historial de g
 Este documento explica el razonamiento, el flujo completo de release y cómo enlazar
 el instalador desde la web del proyecto.
 
+### 🗺️ Esquema
+
+```mermaid
+flowchart LR
+    Commit["commit"] --> Tag["git tag vX.Y.Z"]
+    Tag --> CI["GitHub Actions (windows-latest)"]
+    CI --> Build["build-launcher + build-installer"]
+    Build --> Release["GitHub Release + .exe asset"]
+    Release --> User["👤 usuario descarga"]
+```
+
 ---
 
 ## 🚫 Por qué los binarios NO van en el repositorio

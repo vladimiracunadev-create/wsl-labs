@@ -120,17 +120,80 @@ privilegiado en WSL, sin contraseñas): **📦 Instalar → ▶ Levantar**.
 
 ## 📖 Documentación
 
+> [!TIP]
+> ¿No sabes por dónde empezar? Abre el **[📗 índice maestro](docs/DOCUMENTATION_INDEX.md)**.
+> Abajo tienes el índice completo — **todos** los documentos del repo enlazados.
+
+### 🚀 Inicio y operación
+
 | Documento | Para quién |
-| ----------- | ----------- |
-| [📗 docs/DOCUMENTATION_INDEX.md](docs/DOCUMENTATION_INDEX.md) | **Índice maestro** — empieza aquí si no sabes qué abrir |
+|-----------|-----------|
+| [docs/BEGINNERS_GUIDE.md](docs/BEGINNERS_GUIDE.md) | Introducción para novatos |
+| [docs/INSTALL.md](docs/INSTALL.md) | Instalación end-to-end |
+| [docs/REQUIREMENTS.md](docs/REQUIREMENTS.md) | Requisitos del host y WSL |
 | [ENVIRONMENT_SETUP.md](ENVIRONMENT_SETUP.md) | Preparar Windows + WSL2 paso a paso |
-| [RUNBOOK.md](RUNBOOK.md) | Operación diaria del Control Center |
-| [docs/00-que-es-wsl.md](docs/00-que-es-wsl.md) | Fundamentos de WSL |
-| [docs/03-wsl-vs-docker-vs-vm.md](docs/03-wsl-vs-docker-vs-vm.md) | Comparativa con la línea |
-| [docs/PLAN_PARIDAD.md](docs/PLAN_PARIDAD.md) | Plan de paridad con los repos hermanos |
+| [docs/USER_MANUAL.md](docs/USER_MANUAL.md) | Uso diario del panel + API REST |
+| [docs/DASHBOARD_SETUP.md](docs/DASHBOARD_SETUP.md) | Arquitectura y operación del Control Center |
+| [OPERATING-MODES.md](OPERATING-MODES.md) | Modos de uso (panel, terminal, launcher) |
+| [RUNBOOK.md](RUNBOOK.md) | Operación diaria y respuesta rápida |
+| [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) | Problemas comunes → solución |
+
+### 🏗️ Arquitectura y referencia técnica
+
+| Documento | Para quién |
+|-----------|-----------|
+| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Arquitectura Windows ↔ WSL2 |
+| [docs/TECHNICAL_SPECS.md](docs/TECHNICAL_SPECS.md) | Stacks, puertos, endpoints, contratos |
+| [SYSTEM_SPECS.md](SYSTEM_SPECS.md) | Vista corta de componentes |
+| [docs/LABS_CATALOG.md](docs/LABS_CATALOG.md) | Rol de los 12 labs |
+| [docs/LABS_RUNTIME_REFERENCE.md](docs/LABS_RUNTIME_REFERENCE.md) | Servicio, puerto, health y RAM por lab |
+| [FILE_ARCHITECTURE.md](FILE_ARCHITECTURE.md) | Mapa de carpetas |
+| [docs/TOOLING.md](docs/TOOLING.md) | Herramientas de runtime, dev y CI |
+| [COMPATIBILITY.md](COMPATIBILITY.md) | Compatibilidad por SO y modo |
+| [GLOSSARY.md](GLOSSARY.md) | Glosario de términos |
+
+### 🐧 Fundamentos y referencia de WSL
+
+| Documento | Para quién |
+|-----------|-----------|
+| [docs/wsl-historia-y-referencia.md](docs/wsl-historia-y-referencia.md) | **Historia de WSL, por qué existe y referencia completa de comandos** |
+| [docs/00-que-es-wsl.md](docs/00-que-es-wsl.md) | ¿Qué es WSL? |
+| [docs/01-instalacion-wsl.md](docs/01-instalacion-wsl.md) | Instalar y configurar WSL 2 |
+| [docs/02-comandos-basicos.md](docs/02-comandos-basicos.md) | Comandos básicos |
+| [docs/03-wsl-vs-docker-vs-vm.md](docs/03-wsl-vs-docker-vs-vm.md) | WSL vs Docker vs VM |
+| [docs/04-buenas-practicas.md](docs/04-buenas-practicas.md) | Buenas prácticas |
+| [cheatsheets/](cheatsheets/) | Chuletas: WSL, Linux, systemd, redes |
+
+### 🪟 Distribución Windows
+
+| Documento | Para quién |
+|-----------|-----------|
+| [docs/windows-installer.md](docs/windows-installer.md) | Instalar y compilar el `.exe` |
+| [docs/github-releases-distribution.md](docs/github-releases-distribution.md) | Distribución por GitHub Releases |
+| [docs/technical-audit.md](docs/technical-audit.md) | Auditoría técnica y correcciones |
+
+### 📈 Estado, release y gobernanza
+
+| Documento | Para quién |
+|-----------|-----------|
+| [PROJECT_STATUS.md](PROJECT_STATUS.md) | Estado consolidado |
+| [ROADMAP.md](ROADMAP.md) · [docs/05-roadmap.md](docs/05-roadmap.md) | Hacia dónde va el proyecto |
+| [CHANGELOG.md](CHANGELOG.md) | Historial de cambios |
+| [RELEASE.md](RELEASE.md) | Checklist de release |
+| [SECURITY.md](SECURITY.md) | Modelo de confianza y reporte |
 | [CONTRIBUTING.md](CONTRIBUTING.md) | Cómo añadir un lab |
+| [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) | Normas de convivencia |
+| [SUPPORT.md](SUPPORT.md) | Cómo obtener ayuda |
+| [DEVELOPING.md](DEVELOPING.md) | Extender y mantener el repo |
+| [docs/MAINTAINERS.md](docs/MAINTAINERS.md) | Responsabilidades del mantenedor |
+
+### 👀 Evaluación y paridad
+
+| Documento | Para quién |
+|-----------|-----------|
 | [RECRUITER.md](RECRUITER.md) | Recorrido de 5 min para reclutadores |
-| [ROADMAP.md](ROADMAP.md) | Hacia dónde va el proyecto |
+| [docs/PLAN_PARIDAD.md](docs/PLAN_PARIDAD.md) | Plan de paridad con los repos hermanos |
+| [docs/mapping-from-docker-labs.md](docs/mapping-from-docker-labs.md) | Equivalencias Docker → WSL |
 
 ---
 

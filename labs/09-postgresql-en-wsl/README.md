@@ -16,6 +16,19 @@
 
 ---
 
+### 🗺️ Esquema
+
+```mermaid
+flowchart LR
+    W["Windows"] --> P["Panel :9092"]
+    P --> X["wsl.exe -u root"]
+    X --> S["servicio postgresql"]
+    S --> N["puerto :5432"]
+    N --> C["cliente (health TCP)"]
+```
+
+---
+
 ## 📦 Instalación y base de datos (una vez)
 
 ```bash

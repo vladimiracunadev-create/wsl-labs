@@ -16,6 +16,20 @@
 
 ---
 
+### 🗺️ Esquema
+
+```mermaid
+flowchart LR
+    W["Windows"] --> P["Panel :9092"]
+    P --> X["wsl.exe -u root"]
+    X --> S1["nginx vhost :8090"]
+    X --> S2["postgresql :5432"]
+    S1 --> B["navegador"]
+    S2 --> S1
+```
+
+---
+
 ## 📦 Instalación base (una vez)
 
 Levanta las piezas del stack con los scripts de instalación de la suite:

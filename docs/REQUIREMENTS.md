@@ -9,6 +9,17 @@
 > `wsl-labs` es **local**: todo corre en tu Windows + WSL2. No hay nube ni
 > Kubernetes, así que los requisitos son los de tu propia máquina.
 
+## 🗺️ Esquema
+
+```mermaid
+graph TD
+    C1["🪟 Windows 10 2004+ / 11"] --> C2["Virtualización · Hyper-V<br/>Plataforma de máquina virtual"]
+    C2 --> C3["🐧 WSL2"]
+    C3 --> C4["Distro Ubuntu + systemd"]
+    C4 --> C5["Node.js 18+ · Go 1.21+"]
+    C5 --> C6["🧭 Panel Control Center :9092"]
+```
+
 ---
 
 ## 🖥️ Requisitos del host (Windows)

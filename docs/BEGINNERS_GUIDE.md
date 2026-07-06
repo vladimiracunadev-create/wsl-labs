@@ -3,6 +3,31 @@
 > **Versión**: v1 · Guía pensada para quien empieza con **WSL**, Linux dentro de
 > Windows y este repositorio.
 
+## 🗺️ Esquema
+
+```mermaid
+graph TD
+    subgraph FUND["📚 Fundamentos"]
+        L1["01 · Instalar WSL"]
+        L2["02 · Primeros pasos"]
+        L3["03 · WSL vs Docker vs VM"]
+        L4["04 · systemd"]
+    end
+    subgraph SERV["⚙️ Servicios"]
+        L5["05 · nginx"]
+        L6["06 · apache + php"]
+        L7["07 · node"]
+        L8["08 · flask"]
+        L9["09 · postgres"]
+    end
+    subgraph OPER["🛠️ Operación"]
+        L10["10 · backup"]
+        L11["11 · mini-servidor"]
+        L12["12 · troubleshooting"]
+    end
+    FUND --> SERV --> OPER
+```
+
 ## 🧭 Si solo lees una cosa
 
 Empieza así:

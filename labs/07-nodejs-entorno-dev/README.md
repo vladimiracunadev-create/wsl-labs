@@ -16,6 +16,19 @@
 
 ---
 
+### 🗺️ Esquema
+
+```mermaid
+flowchart LR
+    W["Windows"] --> P["Panel :9092"]
+    P --> X["wsl.exe -u root"]
+    X --> S["systemd: wsl-labs-node"]
+    S --> N["puerto :8082"]
+    N --> B["navegador"]
+```
+
+---
+
 ## 📦 Instalación (una vez)
 
 ```bash
@@ -35,11 +48,18 @@ npm install
 
 ## 🚀 Ejecutar
 
-El catálogo arranca la API en segundo plano fijando `PORT=8082`:
+La API corre como **servicio systemd** (`wsl-labs-node`, creado por
+`scripts/install-node.sh`), por lo que sobrevive a reinicios de la instancia WSL.
+El catálogo lo arranca con:
 
 ```bash
-cd "$WSL_LABS_ROOT/examples/node-api" && PORT=8082 nohup node server.js > /tmp/wsl-labs-node.log 2>&1 &
+systemctl enable --now wsl-labs-node
+systemctl restart wsl-labs-node
 ```
+
+> [!NOTE]
+> El servicio fija `PORT=8082` y corre `node server.js` (módulo `http` nativo,
+> sin `npm install`) desde `examples/node-api`.
 
 ---
 
@@ -47,7 +67,7 @@ cd "$WSL_LABS_ROOT/examples/node-api" && PORT=8082 nohup node server.js > /tmp/w
 
 ```bash
 curl http://localhost:8082
-tail -n 50 /tmp/wsl-labs-node.log
+journalctl -u wsl-labs-node -n 50 --no-pager
 ```
 
 ---
@@ -63,7 +83,7 @@ y el estado de salud se comprueba por HTTP contra el puerto `8082`.
 ## 🛑 Detener
 
 ```bash
-pkill -f 'node server.js' || true
+systemctl stop wsl-labs-node
 ```
 
 ---

@@ -7,6 +7,33 @@
 
 ---
 
+## 🗺️ Esquema
+
+```mermaid
+graph TD
+    Catalogo["📚 12 labs · labs.config.json"]
+    Catalogo --> Service
+    Catalogo --> Learning
+    subgraph Service["⚙️ Service (6)"]
+        S05["05 nginx :8080"]
+        S06["06 apache-php :8081"]
+        S07["07 node :8082"]
+        S08["08 flask :8083"]
+        S09["09 postgresql :5432"]
+        S11["11 mini-servidor :8090"]
+    end
+    subgraph Learning["📚 Learning (6)"]
+        L01["01 instalacion"]
+        L02["02 comandos-base"]
+        L03["03 sistema-archivos"]
+        L04["04 systemd"]
+        L10["10 backup"]
+        L12["12 troubleshooting"]
+    end
+```
+
+---
+
 ## 🗺️ Vista general
 
 | Lab | Tipo | Puerto | Rol |

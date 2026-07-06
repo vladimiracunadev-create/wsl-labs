@@ -15,6 +15,19 @@ red `localhost` cruza un límite Windows↔Linux. Esta auditoría documenta con 
 los problemas reales encontrados durante el desarrollo (v0.1.0 → v0.1.2), su impacto y
 la corrección aplicada. Todos los hallazgos están resueltos y verificados.
 
+### 🗺️ Esquema
+
+```mermaid
+graph LR
+    H1["Variables no expanden"] --> F1["Sustitución de ruta literal"]
+    H2["Background muere"] --> F2["Servicios systemd"]
+    H3["Solo IPv4"] --> F3["Health IPv4 + IPv6"]
+    H4["WSL idle cae"] --> F4["Keepalive"]
+    H5["express sin node_modules"] --> F5["http nativo"]
+    H6["Parpadeo 'No instalado'"] --> F6["Cache de positivos"]
+    H7[":8090 vacío"] --> F7["vhost nginx-mini"]
+```
+
 ---
 
 ## 🧩 Hallazgos y correcciones

@@ -16,6 +16,19 @@
 
 ---
 
+### 🗺️ Esquema
+
+```mermaid
+flowchart LR
+    W["Windows"] --> P["Panel :9092"]
+    P --> X["wsl.exe -u root"]
+    X --> S["systemd: wsl-labs-flask (venv)"]
+    S --> N["puerto :8083"]
+    N --> B["navegador"]
+```
+
+---
+
 ## 📦 Instalación (una vez)
 
 ```bash
@@ -35,11 +48,18 @@ pip install -r requirements.txt
 
 ## 🚀 Ejecutar
 
-El catálogo arranca la app en segundo plano fijando `PORT=8083`:
+La app corre como **servicio systemd** (`wsl-labs-flask`, creado por
+`scripts/install-python.sh`), por lo que sobrevive a reinicios de la instancia WSL.
+El catálogo lo arranca con:
 
 ```bash
-cd "$WSL_LABS_ROOT/examples/python-flask" && PORT=8083 nohup python3 app.py > /tmp/wsl-labs-flask.log 2>&1 &
+systemctl enable --now wsl-labs-flask
+systemctl restart wsl-labs-flask
 ```
+
+> [!NOTE]
+> El servicio fija `PORT=8083` y ejecuta `app.py` con el Python del **venv**
+> (`examples/python-flask/.venv`), donde está instalado Flask.
 
 ---
 
@@ -47,7 +67,7 @@ cd "$WSL_LABS_ROOT/examples/python-flask" && PORT=8083 nohup python3 app.py > /t
 
 ```bash
 curl http://localhost:8083
-tail -n 50 /tmp/wsl-labs-flask.log
+journalctl -u wsl-labs-flask -n 50 --no-pager
 ```
 
 ---
@@ -63,7 +83,7 @@ y el estado de salud se comprueba por HTTP contra el puerto `8083`.
 ## 🛑 Detener
 
 ```bash
-pkill -f 'app.py' || true
+systemctl stop wsl-labs-flask
 ```
 
 ---

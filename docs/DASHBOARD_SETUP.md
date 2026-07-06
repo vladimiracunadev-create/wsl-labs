@@ -20,6 +20,19 @@ El Control Center en **`http://localhost:9092`** existe para:
 > Es un servidor **Node.js con el módulo `http` nativo**: **sin dependencias
 > npm**. No necesitas `npm install` para arrancarlo.
 
+### 🗺️ Esquema
+
+```mermaid
+flowchart LR
+    BR["🌐 Navegador"] -->|HTTP| CC["🧭 Control Center<br/>Node.js :9092"]
+    CC --> EP["Endpoints<br/>/api/wsl/status · install · start · stop · logs"]
+    EP --> WX["wsl.exe -d Ubuntu -u root -- bash -lc"]
+    WX --> WSL["🐧 WSL2 · servicios Linux"]
+    CC -.->|keepalive| WSL
+    WSL --> CC
+    CC -->|estado + logs| BR
+```
+
 ---
 
 ## 🏗️ Arquitectura

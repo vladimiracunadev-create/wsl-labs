@@ -13,6 +13,22 @@
 
 ---
 
+### 🗺️ Esquema
+
+```mermaid
+flowchart TD
+    Q1{"¿Arranca WSL?"} -->|No| F1["wsl --shutdown / --update"]
+    Q1 -->|Sí| Q2{"¿Servicio activo?"}
+    Q2 -->|No| F2["systemctl status"]
+    Q2 -->|Sí| Q3{"¿Puerto a la escucha?"}
+    Q3 -->|No| F3["ss -tulpn"]
+    Q3 -->|Sí| Q4{"¿Responde localhost?"}
+    Q4 -->|No| F4["hostname -I / ip addr"]
+    Q4 -->|Sí| OK["Todo correcto"]
+```
+
+---
+
 ## 🎯 Objetivo
 
 Reunir los comandos de diagnóstico para resolver los problemas más habituales de WSL: arranque, servicios, puertos y red.

@@ -19,6 +19,18 @@ A diferencia de un instalador de aplicación tradicional, **WSL Labs no instala 
 sistema Linux**: se apoya en **WSL 2**, que debe estar instalado por separado. El
 launcher lo verifica y detecta la distro antes de arrancar nada.
 
+### 🗺️ Esquema
+
+```mermaid
+flowchart LR
+    Version["version.txt"]
+    Version --> BuildL["build-launcher.ps1 (Go)"]
+    BuildL --> Exe["wsl-labs-launcher.exe"]
+    Exe --> BuildI["build-installer.ps1 (Inno Setup)"]
+    Version --> BuildI
+    BuildI --> Setup["dist/wsl-labs-setup-{ver}.exe"]
+```
+
 > [!NOTE]
 > El instalador es un **artefacto de release** — nunca se versiona en git. Se publica
 > como asset en [GitHub Releases](https://github.com/vladimiracunadev-create/wsl-labs/releases)

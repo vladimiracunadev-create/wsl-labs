@@ -13,6 +13,17 @@
 
 ---
 
+### 🗺️ Esquema
+
+```mermaid
+flowchart LR
+    H["~ (home Linux)"] -->|"I/O nativo rápido"| K["Kernel WSL2"]
+    M["/mnt/c (disco Windows)"] -->|"cruza frontera, lento"| K
+    E["explorer.exe ."] -.->|"abre home en Windows"| M
+```
+
+---
+
 ## 🎯 Objetivo
 
 Entender la diferencia entre el sistema de archivos Linux y el acceso al disco de Windows, y por qué la ubicación de los proyectos afecta al rendimiento.

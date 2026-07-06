@@ -5,6 +5,17 @@
 > **Objetivo**: Instalar y operar `wsl-labs` de punta a punta —
 > WSL2 + Ubuntu + Node.js + repo + panel + servicios.
 
+## 🗺️ Esquema
+
+```mermaid
+flowchart LR
+    A["1 · WSL2<br/>wsl --install"] --> B["2 · Ubuntu<br/>+ systemd"]
+    B --> C["3 · Node.js 18+<br/>en Windows"]
+    C --> D["4 · Clonar repo<br/>wsl-labs"]
+    D --> E["5 · make serve<br/>panel :9092"]
+    E --> F["6 · Instalar servicios<br/>📦 -> ▶ Levantar"]
+```
+
 ---
 
 ## ✅ Requisitos

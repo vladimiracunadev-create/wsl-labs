@@ -13,6 +13,17 @@
 
 ---
 
+### 🗺️ Esquema
+
+```mermaid
+flowchart LR
+    D["Distro Ubuntu"] -->|"wsl --export"| T["archivo .tar"]
+    T -->|"wsl --import"| C["Distro clonada"]
+    C --> R["wsl -d Ubuntu-WslLabs"]
+```
+
+---
+
 ## 🎯 Objetivo
 
 Exportar una distro WSL como archivo `.tar` e importarla como una nueva distro, para respaldar o clonar entornos.

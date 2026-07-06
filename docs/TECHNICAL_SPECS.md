@@ -7,6 +7,28 @@
 
 ---
 
+## 🗺️ Esquema
+
+```mermaid
+flowchart LR
+    Panel["🧭 Control Center :9092"]
+    subgraph API["Endpoints /api"]
+        OV["/api/overview"]
+        HE["/api/health/:id"]
+        WSL["/api/wsl/{start,stop,logs,install}"]
+    end
+    Panel --> API
+    API -->|"wsl.exe -u root"| Bridge["🌉 WSL2 / Ubuntu"]
+    Bridge --> NGINX["nginx :8080"]
+    Bridge --> APACHE["apache :8081"]
+    Bridge --> NODE["node :8082"]
+    Bridge --> FLASK["flask :8083"]
+    Bridge --> PG["postgresql :5432"]
+    Bridge --> MINI["mini :8090"]
+```
+
+---
+
 ## 🖥️ Base de ejecución
 
 | Componente | Estado actual |

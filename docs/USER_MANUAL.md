@@ -12,6 +12,19 @@
 > El Control Center es un servidor Node.js en `http://localhost:9092` que ejecuta
 > comandos **dentro de WSL como `root`** (estilo Docker, sin contraseña).
 
+## 🗺️ Esquema
+
+```mermaid
+flowchart TD
+    U["👤 Usuario"] --> BTN["Botón del panel<br/>📦 Instalar · ▶ Levantar · ⏹ Detener"]
+    BTN --> API["POST /api/wsl/{install,start,stop}<br/>Control Center :9092"]
+    API --> WSLEXE["wsl.exe -d Ubuntu -u root -- bash -lc"]
+    WSLEXE --> SVC["Servicio Linux en WSL2<br/>nginx · apache · node · flask · postgres"]
+    SVC --> HEALTH["Health check http/tcp"]
+    HEALTH --> UI["UI actualiza estado<br/>healthy · stopped · degraded · missing"]
+    UI --> U
+```
+
 ---
 
 ## 🧭 Flujo recomendado
