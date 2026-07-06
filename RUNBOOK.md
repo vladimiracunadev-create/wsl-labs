@@ -38,6 +38,44 @@ Abre → **<http://localhost:9092>**
 
 ---
 
+## 🧰 2.5 · Puesta a punto inicial (una vez por distro)
+
+Antes de poder arrancar servicios desde el panel hay que instalarlos y habilitar
+`sudo` sin contraseña. Orden recomendado:
+
+```powershell
+# (1) Herramientas base (curl, git, utilidades) — idempotente
+wsl bash scripts/install-base.sh
+
+# (2) Instalar y configurar el/los servicio(s) que vayas a usar — idempotentes
+wsl bash scripts/install-nginx.sh        # nginx en :8080
+wsl bash scripts/install-apache-php.sh   # apache + php en :8081
+wsl bash scripts/install-postgresql.sh   # postgresql en :5432
+wsl bash scripts/install-node.sh         # node (API en :8082)
+wsl bash scripts/install-python.sh       # python + flask (app en :8083)
+
+# (3) Passwordless sudo — SOLO UNA VEZ (lo necesita el dashboard)
+wsl bash scripts/setup-passwordless-sudo.sh
+
+# (4) Levantar el Control Center
+make serve
+```
+
+> [!IMPORTANT]
+> Sin el paso **(3)** los botones **▶** de **nginx (05)**, **apache (06)** y
+> **postgresql (09)** piden la contraseña de `sudo` y **fallan** desde el panel,
+> porque el arranque usa `sudo service …` de forma no interactiva. **node (07)**
+> y **flask (08)** no usan `sudo`: funcionan en cuanto están instalados (pasos 1-2),
+> sin necesidad del paso 3.
+
+<!-- separador entre callouts -->
+
+> [!NOTE]
+> Todos los `install-*.sh` son **idempotentes**: puedes re-ejecutarlos sin miedo.
+> Cada uno imprime al final `[wsl-labs] <servicio> OK en :<puerto>` o el fallo.
+
+---
+
 ## ▶️ 3 · Levantar / bajar servicios
 
 Cada servicio se identifica por su `id` del catálogo. Desde la API (modo dev,

@@ -36,22 +36,33 @@ arranca y monitorea servicios reales dentro de la distro vía `wsl.exe`, un
 
 ## 📡 Estado de los servicios
 
-| Servicio | Lab | Puerto | Estado |
-|---|:---:|---:|:---:|
-| 🧭 Control Center | — | 9092 | 🟢 Operativo |
-| 🌐 nginx | 05 | 8080 | 🟢 Operativo |
-| 🐘 apache + php | 06 | 8081 | 🟢 Operativo |
-| 🟢 node API | 07 | 8082 | 🟢 Operativo |
-| 🐍 flask | 08 | 8083 | 🟢 Operativo |
-| 🗄️ postgresql | 09 | 5432 | 🟢 Operativo |
-| 🧱 mini-servidor | 11 | 8090 | 🟢 Operativo |
+> El mecanismo **Windows ↔ WSL está verificado**: un servicio corriendo en WSL es
+> alcanzable desde el `localhost` de Windows con respuesta **HTTP 200**. Ahora bien,
+> cada servicio **requiere su `install-*.sh`** para existir en la distro, y los que
+> arrancan con `sudo` requieren además `scripts/setup-passwordless-sudo.sh` (una vez).
+
+| Servicio | Lab | Puerto | Estado | Puesta en marcha |
+|---|:---:|---:|:---:|---|
+| 🧭 Control Center | — | 9092 | 🟢 Operativo | Node.js en Windows |
+| 🌐 nginx | 05 | 8080 | 🟡 Requiere setup | install + **passwordless sudo** |
+| 🐘 apache + php | 06 | 8081 | 🟡 Requiere setup | install + **passwordless sudo** |
+| 🟢 node API | 07 | 8082 | 🟢 1-click tras instalar | solo `install-node.sh` (sin sudo) |
+| 🐍 flask | 08 | 8083 | 🟢 1-click tras instalar | solo `install-python.sh` (sin sudo) |
+| 🗄️ postgresql | 09 | 5432 | 🟡 Requiere setup | install + **passwordless sudo** |
+| 🧱 mini-servidor | 11 | 8090 | 🟡 Requiere setup | usa nginx + postgres (sudo) |
+
+**Leyenda:** 🟢 operativo / 1-click · 🟡 operativo tras el setup inicial (ver
+[RUNBOOK.md](RUNBOOK.md) → "Puesta a punto inicial").
 
 ---
 
 ## ✅ Lo consolidado
 
 - Control Center Node.js operativo en `localhost:9092`, sin dependencias npm
-- Puente Windows ↔ WSL2 vía `wsl.exe -d <distro> -- bash -lc`
+- Puente Windows ↔ WSL2 **verificado**: servicio en WSL alcanzable desde el
+  `localhost` de Windows con HTTP 200, vía `wsl.exe -d <distro> -- bash -lc`
+- Scripts `install-*.sh` **idempotentes** que instalan y configuran cada servicio
+  en su puerto del catálogo (nginx 8080, apache 8081, node 8082, flask 8083, postgres 5432)
 - Launcher Go que levanta la plataforma en un doble clic
 - Catálogo `labs.config.json` como única fuente de verdad
 - 12 labs con README homogéneo (6 servicios + 6 de aprendizaje)
@@ -75,7 +86,8 @@ arranca y monitorea servicios reales dentro de la distro vía `wsl.exe`, un
 
 | Riesgo | Impacto |
 |---|---|
-| `sudo` con contraseña para servicios | El panel no arranca servicios hasta configurar `sudoers` |
+| `sudo` con contraseña para servicios | El panel no arranca nginx/apache/postgres hasta ejecutar `scripts/setup-passwordless-sudo.sh` (una vez) |
+| Servicio no instalado en la distro | El botón ▶ falla hasta correr el `install-*.sh` correspondiente |
 | systemd no habilitado en la distro | Se usa `service` en lugar de `systemctl` |
 | Instalador sin firma digital (v0.x) | Windows SmartScreen puede advertir |
 | Node.js instalado dentro de WSL en vez de Windows | El Control Center no arranca |

@@ -44,6 +44,33 @@ La experiencia principal está diseñada para:
 
 ---
 
+## 🔧 Requisitos de operación
+
+Para que los servicios sean **realmente operativos** desde el Control Center hay
+que instalarlos y configurarlos una vez dentro de WSL:
+
+1. **Instalar cada servicio** con su script:
+   `scripts/install-nginx.sh`, `install-apache-php.sh`, `install-postgresql.sh`,
+   `install-node.sh`, `install-python.sh` (ver [RUNBOOK.md](RUNBOOK.md) → "Puesta a punto inicial").
+2. **Configurar `sudo` sin contraseña una sola vez** para los servicios que lo
+   requieren, ejecutando `scripts/setup-passwordless-sudo.sh`.
+
+| Servicio | Lab | Puerto | ¿Necesita passwordless sudo? |
+|---|:---:|---:|:---:|
+| 🌐 nginx | 05 | 8080 | ✅ sí (`sudo service nginx …`) |
+| 🐘 apache + php | 06 | 8081 | ✅ sí (`sudo service apache2 …`) |
+| 🗄️ postgresql | 09 | 5432 | ✅ sí (`sudo service postgresql …`) |
+| 🟢 node API | 07 | 8082 | ❌ no (corre en el userland, sin `sudo`) |
+| 🐍 flask | 08 | 8083 | ❌ no (corre en el userland, sin `sudo`) |
+
+> [!IMPORTANT]
+> nginx, apache y postgres se arrancan vía `sudo service …`. Si **no** ejecutaste
+> `scripts/setup-passwordless-sudo.sh`, el botón **▶** del dashboard se queda
+> esperando la contraseña de `sudo` y el arranque falla. node y flask no usan
+> `sudo`, así que funcionan "1-click" en cuanto están instalados.
+
+---
+
 ## 🪟 Windows + WSL2 — Ruta principal
 
 Es la ruta del producto. En esta iteración se valida:

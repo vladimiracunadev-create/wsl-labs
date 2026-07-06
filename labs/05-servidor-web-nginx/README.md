@@ -39,6 +39,16 @@ sudo nginx -t
 
 ## 🚀 Ejecutar
 
+> [!IMPORTANT]
+> Antes de arrancar por primera vez, ejecuta desde la raíz del repo el
+> install-script (deja nginx instalado y configurado en `:8080`) y, para poder
+> controlarlo con el botón **▶** del dashboard, habilita `sudo` sin contraseña:
+>
+> ```bash
+> wsl bash scripts/install-nginx.sh
+> wsl bash scripts/setup-passwordless-sudo.sh   # solo una vez
+> ```
+
 ```bash
 sudo service nginx start
 ```

@@ -53,6 +53,7 @@ function statusMeta(status) {
     healthy: { label: '✅ Saludable', cls: 'healthy' },
     degraded: { label: '⚠️ Degradado', cls: 'degraded' },
     stopped: { label: '⏹ Detenido', cls: 'stopped' },
+    missing: { label: '⛔ No instalado', cls: 'missing' },
     'n/a': { label: '📘 Learning', cls: 'na' },
   };
   return map[status] || { label: esc(status), cls: 'na' };
@@ -106,6 +107,13 @@ function renderLabCards() {
         actions.push(`<span class="lab-meta">Lab de aprendizaje — ver documentación.</span>`);
       }
 
+      // Si el servicio no está instalado, muestra cómo instalarlo (es más honesto
+      // que dejar un botón "Levantar" que fallaría).
+      const installNote =
+        lab.status === 'missing' && lab.installHint
+          ? `<div class="install-hint">📦 Instálalo primero: <code>${esc(lab.installHint)}</code></div>`
+          : '';
+
       return `
         <article class="lab-card ${meta.cls}">
           <div class="lab-head">
@@ -120,6 +128,7 @@ function renderLabCards() {
           </div>
           <p class="lab-copy">${esc(lab.description)}</p>
           <div class="tag-row">${tags.join('')}</div>
+          ${installNote}
           <div class="card-actions">${actions.join('')}</div>
         </article>
       `;

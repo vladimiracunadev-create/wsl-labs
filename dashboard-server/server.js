@@ -234,14 +234,52 @@ async function checkLabHealth(lab) {
   return { status: 'healthy', detail: 'Puerto abierto' };
 }
 
+// Detecta que binarios de servicio estan instalados en la distro, en UNA sola
+// llamada a wsl.exe (imprime el nombre de cada binario presente). Si wsl.exe no
+// existe (p.ej. CI en Linux) devuelve un Set vacio sin lanzar excepcion.
+async function detectInstalled(distro, requiresList) {
+  const bins = [...new Set(requiresList.filter(Boolean))];
+  if (bins.length === 0) return new Set();
+  // IMPORTANTE: no usamos variables de shell (for/$b). Al ejecutar via
+  // `wsl.exe -- bash -lc`, las variables ASIGNADAS dentro del comando no se
+  // expanden de forma fiable; por eso generamos un check literal por binario.
+  // `; true` al final fuerza exit 0 aunque el ultimo binario falte.
+  const checks = bins.map(
+    (b) => `command -v ${shellQuote(b)} >/dev/null 2>&1 && echo ${shellQuote(b)}`
+  );
+  const cmd = `${checks.join('; ')}; true`;
+  const res = await runInWsl(distro, cmd, HEALTH_TIMEOUT_MS + 2_000);
+  if (!res.ok) return new Set();
+  return new Set(res.stdout.split(/\r?\n/).map((s) => s.trim()).filter(Boolean));
+}
+
 // ── Construccion del overview ───────────────────────────────────────────────
 async function buildOverview() {
   const config = loadConfig();
   const distro = resolveDistro(config);
 
+  // Una sola sonda de "instalado" para todos los servicios.
+  const installedSet = await detectInstalled(
+    distro,
+    config.labs.filter((l) => l.type === 'service').map((l) => l.requires)
+  );
+
   const labs = await Promise.all(
     config.labs.map(async (lab) => {
       const health = await checkLabHealth(lab);
+      // Un servicio esta "instalado" si su binario aparece, o si ya responde sano.
+      const installed =
+        lab.type === 'service'
+          ? Boolean(lab.requires && installedSet.has(lab.requires)) || health.status === 'healthy'
+          : true;
+      // Si el servicio no esta instalado y ademas esta parado, el estado real es
+      // "missing" (falta instalarlo) — mas honesto que decir "detenido".
+      let status = health.status;
+      let statusDetail = health.detail;
+      if (lab.type === 'service' && !installed && health.status === 'stopped') {
+        status = 'missing';
+        statusDetail = 'No instalado';
+      }
       return {
         id: lab.id,
         name: lab.name,
@@ -251,12 +289,15 @@ async function buildOverview() {
         port: lab.port || null,
         url: lab.url || null,
         healthProtocol: lab.healthProtocol || null,
+        requires: lab.requires || null,
+        installHint: lab.installHint || null,
+        installed,
         hasStart: Boolean(lab.startCommand),
         hasStop: Boolean(lab.stopCommand),
         hasLogs: Boolean(lab.logsCommand),
-        // Estado normalizado: healthy | stopped | degraded | n/a
-        status: health.status,
-        statusDetail: health.detail,
+        // Estado normalizado: healthy | stopped | degraded | missing | n/a
+        status,
+        statusDetail,
       };
     })
   );
@@ -268,6 +309,7 @@ async function buildOverview() {
     healthy: services.filter((l) => l.status === 'healthy').length,
     stopped: services.filter((l) => l.status === 'stopped').length,
     degraded: services.filter((l) => l.status === 'degraded').length,
+    missing: services.filter((l) => l.status === 'missing').length,
   };
 
   return {
