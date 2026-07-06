@@ -169,6 +169,7 @@ El panel localiza el motor en `C:\Program Files\WSL\wslc.exe` y avisa si no est�
 
 ## 🔗 Ver también
 
+- [🧰 Referencia completa de la CLI de `wslc`](wslc-cli-referencia.md)
 - [📚 Catálogo de casos de contenedores](LABS_CATALOG.md)
 - [🧾 Referencia de runtime por caso](LABS_RUNTIME_REFERENCE.md)
 - [🔀 Mapeo desde docker-labs](mapping-from-docker-labs.md)

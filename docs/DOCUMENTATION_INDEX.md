@@ -28,6 +28,7 @@
 | Documento | Qué resuelve | Abrir |
 |---|---|---|
 | Guía WSLC | Qué es `wslc`, ciclo de vida, comandos `wslc` ↔ `docker` | [Abrir](wslc-contenedores.md) |
+| Referencia CLI de `wslc` | Todos los comandos y opciones de `wslc` (container/image/network/volume/…) | [Abrir](wslc-cli-referencia.md) |
 | Catálogo de casos | Rol de los 12 casos (starter/platform/infra) | [Abrir](LABS_CATALOG.md) |
 | Runtime reference | Imagen, puerto, comando, red, health y RAM por caso | [Abrir](LABS_RUNTIME_REFERENCE.md) |
 | Mapping docker-labs → wslc | Equivalencias Docker → WSLC caso a caso | [Abrir](mapping-from-docker-labs.md) |

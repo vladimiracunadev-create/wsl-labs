@@ -103,7 +103,7 @@ Empieza por el **[📗 índice maestro](docs/DOCUMENTATION_INDEX.md)**.
 |------|-----------|
 | 🚀 Uso | [INSTALL](docs/INSTALL.md) · [REQUIREMENTS](docs/REQUIREMENTS.md) · [USER_MANUAL](docs/USER_MANUAL.md) · [DASHBOARD_SETUP](docs/DASHBOARD_SETUP.md) · [RUNBOOK](RUNBOOK.md) · [TROUBLESHOOTING](docs/TROUBLESHOOTING.md) |
 | 🏗️ Técnico | [ARCHITECTURE](docs/ARCHITECTURE.md) · [TECHNICAL_SPECS](docs/TECHNICAL_SPECS.md) · [Catálogo de casos](docs/LABS_CATALOG.md) · [Runtime reference](docs/LABS_RUNTIME_REFERENCE.md) · [TOOLING](docs/TOOLING.md) |
-| 🐳 Contenedores | [Guía wslc](docs/wslc-contenedores.md) · [Mapping docker-labs → wslc](docs/mapping-from-docker-labs.md) |
+| 🐳 Contenedores | [Guía wslc](docs/wslc-contenedores.md) · [Referencia CLI wslc](docs/wslc-cli-referencia.md) · [Mapping docker-labs → wslc](docs/mapping-from-docker-labs.md) |
 | 🐧 WSL (contexto) | [Historia y comandos de WSL](docs/wsl-historia-y-referencia.md) · [¿Qué es WSL?](docs/00-que-es-wsl.md) · [Cheatsheets](cheatsheets/) |
 | 🪟 Distribución | [windows-installer](docs/windows-installer.md) · [Releases](docs/github-releases-distribution.md) |
 | 📈 Gobernanza | [PROJECT_STATUS](PROJECT_STATUS.md) · [ROADMAP](ROADMAP.md) · [CHANGELOG](CHANGELOG.md) · [CONTRIBUTING](CONTRIBUTING.md) · [SECURITY](SECURITY.md) · [RECRUITER](RECRUITER.md) |
